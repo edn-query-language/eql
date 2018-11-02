@@ -164,3 +164,27 @@
 
 (comment
   (tc/quick-check 100 (query<->ast-props) :max-size 12))
+
+(deftest test-focus-subquery
+  (is (= (eql/focus-subquery [] [])
+         []))
+  (is (= (eql/focus-subquery [:a :b :c] [])
+         []))
+  (is (= (eql/focus-subquery [:a :b :c] [:d])
+         []))
+  (is (= (eql/focus-subquery [:a :b :c] [:a])
+         [:a]))
+  (is (= (eql/focus-subquery [:a :b :c] [:a :b])
+         [:a :b]))
+  (is (= (eql/focus-subquery [:a {:b [:d]}] [:a :b])
+         [:a {:b [:d]}]))
+  (is (= (eql/focus-subquery [:a {:b [:c :d]}] [:a {:b [:c]}])
+         [:a {:b [:c]}]))
+  (is (= (eql/focus-subquery [:a '({:b [:c :d]} {:param "value"})] [:a {:b [:c]}])
+         [:a '({:b [:c]} {:param "value"})]))
+
+  ; in union case, keys absent from focus will be pulled anyway, given ones will focus
+  (is (= (eql/focus-subquery [:a {:b {:c [:d :e]
+                                       :f [:g :h]}}]
+           [:a {:b {:f [:g]}}])
+         [:a {:b {:c [:d :e] :f [:g]}}])))
