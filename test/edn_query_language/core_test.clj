@@ -188,3 +188,15 @@
                                        :f [:g :h]}}]
            [:a {:b {:f [:g]}}])
          [:a {:b {:c [:d :e] :f [:g]}}])))
+
+(defn transduce-query [xform query]
+  (->> query eql/query->ast
+       (eql/transduce-children xform)
+       eql/ast->query))
+
+(deftest test-tranduce-children
+  (is (= (transduce-query
+           (comp (filter (comp #{:a :c} :key))
+                 (map #(assoc % :params {:n 42})))
+           [:a :b :c :d])
+         '[(:a {:n 42}) (:c {:n 42})])))
