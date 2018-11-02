@@ -259,3 +259,31 @@
     (is (= (eql/merge-queries ['(hello {:login "u1"})]
              ['(hello {:login "u1"})])
            nil))))
+
+(deftest test-normalize-query-variables
+  (testing "blank query"
+    (is (= (eql/normalize-query-variables [])
+           [])))
+
+  (testing "simple query"
+    (is (= (eql/normalize-query-variables [:a :b :c])
+           [:a :b :c])))
+
+  (testing "normalize ident values"
+    (is (= (eql/normalize-query-variables [[:foo "bar"]])
+           [[:foo ::eql/var]])))
+
+  (testing "normalize params"
+    (is (= (eql/normalize-query-variables ['(:foo {:x 1 :y 2})])
+           ['(:foo {:x ::eql/var :y ::eql/var})])))
+
+  (testing "all together"
+    (is (= (eql/normalize-query-variables '[:a :b {[:join "val"] [{(:c {:page 10}) [:d]}]}])
+           '[:a :b
+             {[:join ::eql/var]
+              [({:c [:d]}
+                 {:page ::eql/var})]}]))))
+
+(deftest test-query-id
+  (is (= (eql/query-id '[:a :b {[:join "val"] [{(:c {:page 10}) [:d]}]}])
+         -61421281)))
