@@ -1,29 +1,56 @@
 (ns edn-query-language.core-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as s.test]
+            [clojure.test :refer [deftest is testing]]
+            [clojure.test.check :as tc]
+            [clojure.test.check.clojure-test :as test]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as props]
             [edn-query-language.core :as eql]))
+
+(s.test/instrument)
+
+;; spec tests
+
+(defn valid-queries-props []
+  (props/for-all [query (eql/make-gen {} ::eql/gen-query)]
+    (s/valid? ::eql/query query)))
+
+(test/defspec generator-makes-valid-queries {:max-size 12 :num-tests 50} (valid-queries-props))
+
+(comment
+  (tc/quick-check 50 (valid-queries-props) :max-size 12))
+
+;; lib tests
+
+(defn remove-meta [x]
+  (eql/transduce-children (map #(dissoc % :meta)) x))
+
+(defn tquery->ast [query]
+  (remove-meta (eql/query->ast query)))
 
 (deftest test-query->ast
   (testing "empty query"
-    (is (= (eql/query->ast [])
+    (is (= (tquery->ast [])
            {:type :root, :children []})))
 
   (testing "single property"
-    (is (= (eql/query->ast [:a])
+    (is (= (tquery->ast [:a])
            {:type :root, :children [{:type :prop, :dispatch-key :a, :key :a}]})))
 
   (testing "multiple properties"
-    (is (= (eql/query->ast [:a :b])
+    (is (= (tquery->ast [:a :b])
            {:type     :root,
             :children [{:type :prop, :dispatch-key :a, :key :a}
                        {:type :prop, :dispatch-key :b, :key :b}]})))
 
   (testing "blank join"
-    (is (= (eql/query->ast [{:a []}])
+    (is (= (tquery->ast [{:a []}])
            {:type     :root,
             :children [{:type :join, :dispatch-key :a, :key :a, :query [], :children []}]})))
 
   (testing "simple join"
-    (is (= (eql/query->ast [{:a [:b]}])
+    (is (= (tquery->ast [{:a [:b]}])
            {:type     :root,
             :children [{:type         :join,
                         :dispatch-key :a,
@@ -32,42 +59,38 @@
                         :children     [{:type :prop, :dispatch-key :b, :key :b}]}]})))
 
   (testing "param expression"
-    (is (= (eql/query->ast ['(:a {:foo "bar"})])
+    (is (= (tquery->ast ['(:a {:foo "bar"})])
            {:type     :root,
             :children [{:type         :prop,
                         :dispatch-key :a,
                         :key          :a,
-                        :params       {:foo "bar"},
-                        :meta         {:line 35, :column 30}}]})))
+                        :params       {:foo "bar"},}]})))
 
   (testing "param join"
-    (is (= (eql/query->ast ['({:a [:sub]} {:foo "bar"})])
+    (is (= (tquery->ast ['({:a [:sub]} {:foo "bar"})])
            {:type     :root,
             :children [{:type         :join,
                         :dispatch-key :a,
                         :key          :a,
                         :query        [:sub],
                         :children     [{:type :prop, :dispatch-key :sub, :key :sub}],
-                        :params       {:foo "bar"},
-                        :meta         {:line 44, :column 30}}]})))
+                        :params       {:foo "bar"},}]})))
 
   (testing "param join 2"
-    (is (= (eql/query->ast [{'(:a {:foo "bar"}) [:sub]}])
+    (is (= (tquery->ast [{'(:a {:foo "bar"}) [:sub]}])
            {:type     :root
             :children [{:children     [{:dispatch-key :sub
                                         :key          :sub
                                         :type         :prop}]
                         :dispatch-key :a
                         :key          :a
-                        :meta         {:column 31
-                                       :line   55}
                         :params       {:foo "bar"}
                         :query        [:sub]
                         :type         :join}]})))
 
   (testing "union query"
-    (is (= (eql/query->ast [{:foo {:a [:b]
-                                   :c [:d]}}])
+    (is (= (tquery->ast [{:foo {:a [:b]
+                                :c [:d]}}])
            {:type     :root,
             :children [{:type         :join,
                         :dispatch-key :foo,
@@ -85,7 +108,7 @@
                                                     :children  [{:type :prop, :dispatch-key :d, :key :d}]}]}]}]})))
 
   (testing "unbounded recursion"
-    (is (= (eql/query->ast '[{:item [:a :b {:parent ...}]}])
+    (is (= (tquery->ast '[{:item [:a :b {:parent ...}]}])
            '{:type     :root,
              :children [{:type         :join,
                          :dispatch-key :item,
@@ -96,7 +119,7 @@
                                         {:type :join, :dispatch-key :parent, :key :parent, :query ...}]}]})))
 
   (testing "bounded recursion"
-    (is (= (eql/query->ast '[{:item [:a :b {:parent 5}]}])
+    (is (= (tquery->ast '[{:item [:a :b {:parent 5}]}])
            '{:type     :root,
              :children [{:type         :join,
                          :dispatch-key :item,
@@ -107,21 +130,37 @@
                                         {:type :join, :dispatch-key :parent, :key :parent, :query 5}]}]})))
 
   (testing "mutation expression"
-    (is (= (eql/query->ast ['(a {})])
+    (is (= (tquery->ast ['(a {})])
            '{:type     :root,
              :children [{:dispatch-key a,
                          :key          a,
                          :params       {},
-                         :meta         {:line 110, :column 30},
                          :type         :call}]})))
 
   (testing "mutation join expression"
-    (is (= (eql/query->ast [{'(a {}) [:sub-query]}])
+    (is (= (tquery->ast [{'(a {}) [:sub-query]}])
            '{:type     :root,
              :children [{:dispatch-key a,
                          :key          a,
                          :params       {},
-                         :meta         {:line 119, :column 31},
                          :type         :call,
                          :query        [:sub-query],
                          :children     [{:type :prop, :dispatch-key :sub-query, :key :sub-query}]}]}))))
+
+(defn query<->ast-props []
+  (props/for-all [query (eql/make-gen {::eql/gen-params
+                                       (fn [_]
+                                         (gen/map gen/keyword gen/string-alphanumeric))}
+                          ::eql/gen-query)]
+    (let [ast (-> query
+                  eql/query->ast
+                  eql/ast->query
+                  eql/query->ast)]
+      (= ast (-> ast
+                 eql/ast->query
+                 eql/query->ast)))))
+
+(test/defspec query-ast-roundtrip {:max-size 12 :num-tests 100} (query<->ast-props))
+
+(comment
+  (tc/quick-check 100 (query<->ast-props) :max-size 12))
