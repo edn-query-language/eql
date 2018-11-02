@@ -1,0 +1,34 @@
+:source-highlighter: coderay
+:source-language: clojure
+:toc:
+:toc-placement: preamble
+:sectlinks:
+:sectanchors:
+:sectnums:
+
+= EQL
+
+This repository contains a specification for EQL and a support library to help the development
+of tools using it.
+
+== Rational
+
+*EQL* is a query syntax to express information requirements using link:https://github.com/edn-format/edn[edn].
+
+== Specification
+
+== Library
+
+=== Clojure Specs
+
+=== AST Encode/Decode
+
+== History
+
+EQL is a later baptized language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
+by link:https://github.com/omcljs/om[Om.next].
+
+== Projects using EQL
+
+- link:http://fulcro.fulcrologic.com/[Fulcro]
+- link:https://github.com/wilkerlucio/pathom[Pathom]
