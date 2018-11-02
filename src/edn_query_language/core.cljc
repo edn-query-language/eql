@@ -221,6 +221,7 @@
 
 ;; ast specs
 
+(s/def :edn-query-language.ast/query ::join-query)
 (s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol?))
 (s/def :edn-query-language.ast/dispatch-key (s/or :prop ::property :sym symbol?))
 (s/def :edn-query-language.ast/union-key ::property)
@@ -242,20 +243,20 @@
   (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key]))
 
 (defmethod node-type :join [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::join-query] :opt-un [:edn-query-language.ast/children])
+  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key :edn-query-language.ast/query] :opt-un [:edn-query-language.ast/children])
     #(if (-> % :query first (= :recursion)) % (if (contains? % :children) % false))
     (fn [x] (every? (comp #(contains? #{:prop :join :union :call nil} %) :type) (:children x)))))
 
 (defmethod node-type :union [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type ::join-query :edn-query-language.ast/children])
+  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/query :edn-query-language.ast/children])
     #(every? (comp #{:union-entry} :type) (:children %))))
 
 (defmethod node-type :union-entry [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/union-key ::join-query :edn-query-language.ast/children])
+  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/union-key :edn-query-language.ast/query :edn-query-language.ast/children])
     (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
 (defmethod node-type :call [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key :edn-query-language.core/params] :opt-un [::join-query :edn-query-language.ast/children])
+  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params] :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
     (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
 (defmethod node-type :root [_]
