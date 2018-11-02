@@ -8,6 +8,10 @@
 
 = EQL
 
+image:https://img.shields.io/clojars/v/edn-query-language/eql.svg[link=https://clojars.org/edn-query-language/eql]
+image:https://cljdoc.xyz/badge/edn-query-language/eql[link=https://cljdoc.xyz/d/edn-query-language/eql/CURRENT]
+image:https://circleci.com/gh/edn-query-language/eql/tree/master.svg?style=svg["CircleCI", link="https://circleci.com/gh/edn-query-language/eql/tree/master"]
+
 This repository contains a specification for EQL and a support library to help the development
 of tools using it.
 
