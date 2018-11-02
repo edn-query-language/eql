@@ -1,4 +1,4 @@
-(defproject edn-query-language/edn "1.0.0"
+(defproject edn-query-language/eql "0.0.1"
   :description "EDN Query Language support library"
   :url "https://github.com/edn-query-language/eql"
   :license {:name "MIT" :url "https://opensource.org/licenses/MIT"}
