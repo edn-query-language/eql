@@ -1,5 +1,5 @@
 (ns edn-query-language.spec.ast
-  (:require [com.wsscode.pathom.specs.query :as q]
+  (:require [edn-query-language.spec.query :as q]
             [clojure.spec.alpha :as s]))
 
 (s/def ::query ::q/join-query)
