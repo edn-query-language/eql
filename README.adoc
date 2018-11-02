@@ -27,12 +27,12 @@ of tools using it.
 
 === AST Encode/Decode
 
-== History
+//== History
+//
+//EQL is a later baptized language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
+//by link:https://github.com/omcljs/om[Om.next].
 
-EQL is a later baptized language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
-by link:https://github.com/omcljs/om[Om.next].
-
-== Projects using EQL
-
-- link:http://fulcro.fulcrologic.com/[Fulcro]
-- link:https://github.com/wilkerlucio/pathom[Pathom]
+//== Projects using EQL
+//
+//- link:http://fulcro.fulcrologic.com/[Fulcro]
+//- link:https://github.com/wilkerlucio/pathom[Pathom]
