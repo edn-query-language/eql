@@ -582,5 +582,5 @@
     (ast->query)))
 
 (s/fdef merge-queries
-  :args (s/cat :qa ::query, :qb ::query)
+  :args (s/cat :qa (s/nilable ::query), :qb (s/nilable ::query))
   :ret (s/nilable ::query))
