@@ -112,7 +112,7 @@ no such thing, and it dictates only the syntax but not the semantics. Some featu
 GraphQL just doesn't make sense in EQL, like fragments, since EQL is already a data format (EDN),
 it's easy to compose data as you would do in a regular Clojure program, for that reason
 many features are not nescessary because EQL is a parseable data format with all the Clojure
-tools already available to operate on top of it. Also read the <<AST,AST Encode/Decode>> section for more information
+tools already available to operate on top of it. Also read the <<AST Encode/Decode,AST>> section for more information
 on how to programatically manipulate EQL data structures.
 
 == Specification
@@ -133,11 +133,10 @@ Examples:
 
 [source,clojure]
 ----
-[] # empty transaction
-----
+[] ; empty transaction
 
-[source,clojure]
-----
+; ast
+
 {:type :root, :children []}
 ----
 
@@ -163,6 +162,46 @@ Examples:
 ----
 [{:favorite-albums
   [:album/name :album/year]}]
+  
+; ast
+
+{:type :root
+ :children [{:type :join
+             :dispatch-key :favorite-albums
+             :key :favorite-albums
+             :query [:album/name :album/year]
+             :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                        {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}
+----
+
+Nested joins example:
+
+[source,clojure]
+----
+[{:favorite-albums
+  [:album/name :album/year
+   {:album/tracks
+    [:track/name
+     :track/duration]}]}]
+     
+; ast
+
+{:type :root
+ :children [{:type :join
+             :dispatch-key :favorite-albums
+             :key :favorite-albums
+             :query [:album/name #:album{:tracks [:track/name :track/duration]}]
+             :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                        {:type :join
+                         :dispatch-key :album/tracks
+                         :key :album/tracks
+                         :query [:track/name :track/duration]
+                         :children [{:type :prop
+                                     :dispatch-key :track/name
+                                     :key :track/name}
+                                    {:type :prop
+                                     :dispatch-key :track/duration
+                                     :key :track/duration}]}]}]}
 ----
 
 === Idents
@@ -177,6 +216,35 @@ Examples:
 [source,clojure]
 ----
 [[:customer/id 123]]
+
+; ast
+
+{:type :root
+ :children [{:type :prop, :dispatch-key :customer/id, :key [:customer/id 123]}]}
+----
+
+Note that this time in the AST the `:dispatch-key` and `:key` got different values this
+time, the `:dispatch-key` been just the `ident key` while the `:key` contains the
+full thing.
+
+It's common to use an ident as a join key to start a query for some entity:
+
+[source,clojure]
+----
+[{[:customer/id 123]
+  [:customer/name :customer/email]}]
+  
+; ast
+
+{:type :root
+ :children [{:type :join
+             :dispatch-key :customer/id
+             :key [:customer/id 123]
+             :query [:customer/name :customer/email]
+             :children [{:type :prop, :dispatch-key :customer/name, :key :customer/name}
+                        {:type :prop
+                         :dispatch-key :customer/email
+                         :key :customer/email}]}]}
 ----
 
 === Parameters
