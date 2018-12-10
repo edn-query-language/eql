@@ -148,7 +148,18 @@ at syntax level it has no difference.
 Properties in `EQL` are expressed as Clojure keywords, they can be simple or qualified
 keywords, and they express the property been requested.
 
-For example,
+Examples:
+
+[source,clojure]
+----
+[:album/name :album/year]
+
+; ast
+
+{:type :root
+ :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
+            {:type :prop, :dispatch-key :album/year, :key :album/year}]}
+----
 
 === Joins
 
