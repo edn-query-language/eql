@@ -359,6 +359,18 @@ map values can be anything. Here are more examples of parameterizing queries:
 
 === Query Meta
 
+Meta data from the query is stored in the AST and restore on the other way around. This
+allows to add an extra meta layer of information at query level.
+
+[source,clojure]
+----
+(with-meta [] {:meta "data"})
+
+; ast
+
+{:type :root, :children [], :meta {:meta "data"}}
+----
+
 === Unions
 
 === Mutations
