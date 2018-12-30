@@ -5,6 +5,13 @@
 :sectlinks:
 :sectanchors:
 :sectnums:
+ifdef::env-github,env-cljdoc[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
 
 = EQL
 
@@ -356,6 +363,9 @@ map values can be anything. Here are more examples of parameterizing queries:
    :children
    [{:type :prop :dispatch-key :sub-query :key :sub-query}]}]}
 ----
+
+WARNING: remember that unless you are writing on some EDN file, you have to quote the
+lists or Clojure will try to execute then, EQL expects then to come as data lists.
 
 === Query Meta
 
