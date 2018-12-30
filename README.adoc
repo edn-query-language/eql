@@ -373,6 +373,118 @@ allows to add an extra meta layer of information at query level.
 
 === Unions
 
+In EQL unions are used to specify polymorphic requirements, that means depending on some
+condition a different query might be choosen to fulfill the requirements. For example,
+in a messaging the app you have a single list, each entry on the chat log can be a `message`,
+`audio` or `photo`, each own having it query requirement. Here is it in code:
+
+[source,clojure]
+----
+; message query
+[:message/id :message/text :chat.entry/timestamp]
+
+; audio query
+[:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+
+; photo query
+[:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]
+
+; list query
+[{:chat/entries ???}] ; what goes there?
+----
+
+Now to express this polymorphic requirement as the sub-query of the `:chat/entries` list
+we can use a map as the join value, and each entry on this map represents a possible
+sub-query, the way this information is used is up the parser implementation, EQL only
+defines the syntax, here are some examples of how it could be written:
+
+[source,clojure]
+----
+; in this example the selection is made by looking if the processed entry contains
+; some value on the key used for its selection
+[{:chat/entries
+  {:message/id [:message/id :message/text :chat.entry/timestamp]
+   :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :photo/id   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; in this case we give a type name and use as the key, this usually requires some
+; out of band configuration to know how to pull this data from each entry to use
+; as the comparison
+[{:chat/entries
+  {:entry.type/message [:message/id :message/text :chat.entry/timestamp]
+   :entry.type/audio   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :entry.type/photo   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; ast for first example
+
+{:type :root,
+ :children
+ [{:type :join,
+   :dispatch-key :chat/entries,
+   :key :chat/entries,
+   :query
+   {:message/id [:message/id :message/text :chat.entry/timestamp],
+    :audio/id
+    [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
+    :photo/id
+    [:photo/id
+     :photo/url
+     :photo/width
+     :photo/height
+     :chat.entry/timestamp]},
+   :children
+   [{:type :union,
+     :query
+     {:message/id [:message/id :message/text :chat.entry/timestamp],
+      :audio/id
+      [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
+      :photo/id
+      [:photo/id
+       :photo/url
+       :photo/width
+       :photo/height
+       :chat.entry/timestamp]},
+     :children
+     [{:type :union-entry,
+       :union-key :message/id,
+       :query [:message/id :message/text :chat.entry/timestamp],
+       :children
+       [{:type :prop, :dispatch-key :message/id, :key :message/id}
+        {:type :prop, :dispatch-key :message/text, :key :message/text}
+        {:type :prop,
+         :dispatch-key :chat.entry/timestamp,
+         :key :chat.entry/timestamp}]}
+      {:type :union-entry,
+       :union-key :audio/id,
+       :query
+       [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
+       :children
+       [{:type :prop, :dispatch-key :audio/id, :key :audio/id}
+        {:type :prop, :dispatch-key :audio/url, :key :audio/url}
+        {:type :prop,
+         :dispatch-key :audio/duration,
+         :key :audio/duration}
+        {:type :prop,
+         :dispatch-key :chat.entry/timestamp,
+         :key :chat.entry/timestamp}]}
+      {:type :union-entry,
+       :union-key :photo/id,
+       :query
+       [:photo/id
+        :photo/url
+        :photo/width
+        :photo/height
+        :chat.entry/timestamp],
+       :children
+       [{:type :prop, :dispatch-key :photo/id, :key :photo/id}
+        {:type :prop, :dispatch-key :photo/url, :key :photo/url}
+        {:type :prop, :dispatch-key :photo/width, :key :photo/width}
+        {:type :prop, :dispatch-key :photo/height, :key :photo/height}
+        {:type :prop,
+         :dispatch-key :chat.entry/timestamp,
+         :key :chat.entry/timestamp}]}]}]}]}
+----
+
 === Mutations
 
 == Library
