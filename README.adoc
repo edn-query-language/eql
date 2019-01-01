@@ -558,7 +558,7 @@ To convert between query and AST, EQL provides the helper functions `eql/query->
 
 === API Docs
 
-Check complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/0.0.3/api/edn-query-language.core[EQL cljdoc page].
+Check complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core[EQL cljdoc page].
 
 //== History
 //
