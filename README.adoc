@@ -506,6 +506,9 @@ NOTE: Mutations and parameters are very like each other, their main difference
 is that once uses symbols as keys, the other uses one of the read options (properties,
 idents, joins).
 
+Mutations can appear anywhere in the query, root or sub-queries (although if that's supported
+by the parser it's up to each implementation).
+
 ==== Mutation Joins
 
 A mutation call can also have a join to represent the data to pull from the
@@ -533,9 +536,25 @@ mutation output. The syntax is like a join that you do around the mutation:
 
 == Library
 
+The package `edn-query-language.core` provides a suite of specs to validate queries and
+AST's, it also provides generators for the query and helper functions to common
+query operations.
+
 === Clojure Specs
 
 === AST Encode/Decode
+
+To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
+`eql/ast->query` helper functions. Here are some example usages:
+
+[source,clojure]
+----
+(eql/query->ast [:foo])
+; => {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]}
+
+(eql/ast->query {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]})
+; => [:foo]
+----
 
 //== History
 //
