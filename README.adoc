@@ -163,7 +163,7 @@ Examples:
 
 ; ast
 
-{:type :root
+{:type     :root
  :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
             {:type :prop, :dispatch-key :album/year, :key :album/year}]}
 ----
@@ -183,14 +183,13 @@ Examples:
   
 ; ast
 
-{:type :root
- :children [{:type :join
+{:type     :root
+ :children [{:type         :join
              :dispatch-key :favorite-albums
-             :key :favorite-albums
-             :query [:album/name :album/year]
-             :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
-                        {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}
-----
+             :key          :favorite-albums
+             :query        [:album/name :album/year]
+             :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                            {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}----
 
 Nested joins example:
 
@@ -206,27 +205,24 @@ Nested joins example:
 
 {:type :root
  :children
- [{:type :join
+ [{:type         :join
    :dispatch-key :favorite-albums
-   :key :favorite-albums
+   :key          :favorite-albums
 
-   :query
-   [:album/name
-    :album/year
-    {:album/tracks [:track/name :track/duration]}]
+   :query        [:album/name
+                  :album/year
+                  {:album/tracks [:track/name :track/duration]}]
 
-   :children
-   [{:type :prop, :dispatch-key :album/name, :key :album/name}
-    {:type :prop, :dispatch-key :album/year, :key :album/year}
-    {:type :join
-     :dispatch-key :album/tracks
-     :key :album/tracks
-     :query [:track/name :track/duration]
-     :children
-     [{:type :prop, :dispatch-key :track/name, :key :track/name}
-      {:type :prop
-       :dispatch-key :track/duration
-       :key :track/duration}]}]}]}
+   :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                  {:type :prop, :dispatch-key :album/year, :key :album/year}
+                  {:type         :join
+                   :dispatch-key :album/tracks
+                   :key          :album/tracks
+                   :query        [:track/name :track/duration]
+                   :children     [{:type :prop, :dispatch-key :track/name, :key :track/name}
+                                  {:type         :prop
+                                   :dispatch-key :track/duration
+                                   :key          :track/duration}]}]}]}
 ----
 
 === Idents
@@ -261,15 +257,15 @@ It's common to use an ident as a join key to start a query for some entity:
   
 ; ast
 
-{:type :root
- :children [{:type :join
+{:type     :root
+ :children [{:type         :join
              :dispatch-key :customer/id
-             :key [:customer/id 123]
-             :query [:customer/name :customer/email]
-             :children [{:type :prop, :dispatch-key :customer/name, :key :customer/name}
-                        {:type :prop
-                         :dispatch-key :customer/email
-                         :key :customer/email}]}]}
+             :key          [:customer/id 123]
+             :query        [:customer/name :customer/email]
+             :children     [{:type :prop, :dispatch-key :customer/name, :key :customer/name}
+                            {:type         :prop
+                             :dispatch-key :customer/email
+                             :key          :customer/email}]}]}
 ----
 
 === Parameters
@@ -288,13 +284,12 @@ is expressed by wrapping the thing with a EDN list, like so:
 
 ; ast
 
-{:type :root,
- :children
- [{:type :prop,
-   :dispatch-key :foo,
-   :key :foo,
-   :params {:with "params"},
-   :meta {:line 1, :column 15}}]}
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :foo
+             :key          :foo
+             :params       {:with "params"}
+             :meta         {:line 1, :column 15}}]}
 ----
 
 Note on the AST side it gets a new `:params` key. Params *must* be always maps, the
@@ -306,45 +301,44 @@ map values can be anything. Here are more examples of parameterizing queries:
 
 [([:ident "value"] {:with "param"})]
 
-{:type :root
- :children
- [{:type :prop
-   :dispatch-key :ident
-   :key [:ident "value"]
-   :params {:with "param"}
-   :meta {:line 1 :column 15}}]}
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "param"}
+             :meta         {:line 1, :column 15}}]}
 
 ; join with params wrap the key with the list
 
 [{(:join-key {:with "params"})
   [:sub-query]}]
 
-{:type :root
- :children
- [{:type :join
-   :dispatch-key :join-key
-   :key :join-key
-   :params {:with "params"}
-   :meta {:line 1 :column 16}
-   :query [:sub-query]
-   :children
-   [{:type :prop :dispatch-key :sub-query :key :sub-query}]}]}
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
 
 ; ident join with params
 
 [{([:ident "value"] {:with "params"})
   [:sub-query]}]
   
-{:type :root
- :children
- [{:type :join
-   :dispatch-key :ident
-   :key [:ident "value"]
-   :params {:with "params"}
-   :meta {:line 1 :column 16}
-   :query [:sub-query]
-   :children
-   [{:type :prop :dispatch-key :sub-query :key :sub-query}]}]}
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "params"}
+             :meta         {:line 1 :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
 
 ; alternate syntax to add params on joins (wrap the entire map, AST result is the same)
 
@@ -352,16 +346,16 @@ map values can be anything. Here are more examples of parameterizing queries:
    [:sub-query]}
   {:with "params"})]
   
-{:type :root
- :children
- [{:type :join
-   :dispatch-key :join-key
-   :key :join-key
-   :params {:with "params"}
-   :meta {:line 1 :column 16}
-   :query [:sub-query]
-   :children
-   [{:type :prop :dispatch-key :sub-query :key :sub-query}]}]}
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
 ----
 
 WARNING: remember that unless you are writing on some EDN file, you have to quote the
@@ -427,72 +421,61 @@ defines the syntax, here are some examples of how it could be written:
 
 ; ast for first example
 
-{:type :root,
+{:type :root
  :children
- [{:type :join,
-   :dispatch-key :chat/entries,
-   :key :chat/entries,
-   :query
-   {:message/id [:message/id :message/text :chat.entry/timestamp],
-    :audio/id
-    [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
-    :photo/id
-    [:photo/id
-     :photo/url
-     :photo/width
-     :photo/height
-     :chat.entry/timestamp]},
-   :children
-   [{:type :union,
-     :query
-     {:message/id [:message/id :message/text :chat.entry/timestamp],
-      :audio/id
-      [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
-      :photo/id
-      [:photo/id
-       :photo/url
-       :photo/width
-       :photo/height
-       :chat.entry/timestamp]},
-     :children
-     [{:type :union-entry,
-       :union-key :message/id,
-       :query [:message/id :message/text :chat.entry/timestamp],
-       :children
-       [{:type :prop, :dispatch-key :message/id, :key :message/id}
-        {:type :prop, :dispatch-key :message/text, :key :message/text}
-        {:type :prop,
-         :dispatch-key :chat.entry/timestamp,
-         :key :chat.entry/timestamp}]}
-      {:type :union-entry,
-       :union-key :audio/id,
-       :query
-       [:audio/id :audio/url :audio/duration :chat.entry/timestamp],
-       :children
-       [{:type :prop, :dispatch-key :audio/id, :key :audio/id}
-        {:type :prop, :dispatch-key :audio/url, :key :audio/url}
-        {:type :prop,
-         :dispatch-key :audio/duration,
-         :key :audio/duration}
-        {:type :prop,
-         :dispatch-key :chat.entry/timestamp,
-         :key :chat.entry/timestamp}]}
-      {:type :union-entry,
-       :union-key :photo/id,
-       :query
-       [:photo/id
-        :photo/url
-        :photo/width
-        :photo/height
-        :chat.entry/timestamp],
-       :children
-       [{:type :prop, :dispatch-key :photo/id, :key :photo/id}
-        {:type :prop, :dispatch-key :photo/url, :key :photo/url}
-        {:type :prop, :dispatch-key :photo/width, :key :photo/width}
-        {:type :prop, :dispatch-key :photo/height, :key :photo/height}
-        {:type :prop,
-         :dispatch-key :chat.entry/timestamp,
-         :key :chat.entry/timestamp}]}]}]}]}
+ [{:type         :join
+   :dispatch-key :chat/entries
+   :key          :chat/entries
+   :query        {:message/id [:message/id :message/text :chat.entry/timestamp]
+                  :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                  :photo/id   [:photo/id
+                               :photo/url
+                               :photo/width
+                               :photo/height
+                               :chat.entry/timestamp]}
+   :children     [{:type :union
+                   :query
+                         {:message/id [:message/id :message/text :chat.entry/timestamp]
+                          :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                          :photo/id   [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]}
+                   :children
+                         [{:type      :union-entry
+                           :union-key :message/id
+                           :query     [:message/id :message/text :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :message/id, :key :message/id}
+                                       {:type :prop, :dispatch-key :message/text, :key :message/text}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :audio/id
+                           :query     [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :audio/id, :key :audio/id}
+                                       {:type :prop, :dispatch-key :audio/url, :key :audio/url}
+                                       {:type         :prop
+                                        :dispatch-key :audio/duration
+                                        :key          :audio/duration}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :photo/id
+                           :query     [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :photo/id, :key :photo/id}
+                                       {:type :prop, :dispatch-key :photo/url, :key :photo/url}
+                                       {:type :prop, :dispatch-key :photo/width, :key :photo/width}
+                                       {:type :prop, :dispatch-key :photo/height, :key :photo/height}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}]}]}]}
 ----
 
 === Mutations
@@ -512,13 +495,13 @@ that names the mutation and the second is a map with input data.
 {:type :root
  :children
  [{:dispatch-key call.some/operation
-   :key call.some/operation
-   :params {:data "input"}
-   :meta {:line 610 :column 17}
-   :type :call}]}
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 610, :column 17}
+   :type         :call}]}
 ----
 
-NOTE: mutations and parameters are very like each other, their main difference
+NOTE: Mutations and parameters are very like each other, their main difference
 is that once uses symbols as keys, the other uses one of the read options (properties,
 idents, joins).
 
