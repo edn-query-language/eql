@@ -189,7 +189,8 @@ Examples:
              :key          :favorite-albums
              :query        [:album/name :album/year]
              :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
-                            {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}----
+                            {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}
+----
 
 Nested joins example:
 
