@@ -497,6 +497,56 @@ defines the syntax, here are some examples of how it could be written:
 
 === Mutations
 
+Mutations in EQL are used to represent operation calls, usually to do something
+that will cause a side effect to the world.
+
+A mutation is represented by a list of two elements, the first is the symbol
+that names the mutation and the second is a map with input data.
+
+[source,clojure]
+----
+[(call.some/operation {:data "input"})]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key call.some/operation
+   :params {:data "input"}
+   :meta {:line 610 :column 17}
+   :type :call}]}
+----
+
+NOTE: mutations and parameters are very like each other, their main difference
+is that once uses symbols as keys, the other uses one of the read options (properties,
+idents, joins).
+
+==== Mutation Joins
+
+A mutation call can also have a join to represent the data to pull from the
+mutation output. The syntax is like a join that you do around the mutation:
+
+[source,clojure]
+----
+[{(call.some/operation {:data "input"})
+  [:response :key-a :key-b]}]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 612 :column 18}
+   :type         :call
+   :query        [:response :key-a :key-b]
+   :children     [{:type :prop, :dispatch-key :response, :key :response}
+                  {:type :prop, :dispatch-key :key-a, :key :key-a}
+                  {:type :prop, :dispatch-key :key-b, :key :key-b}]}]}
+----
+
 == Library
 
 === Clojure Specs
