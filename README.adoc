@@ -556,6 +556,10 @@ To convert between query and AST, EQL provides the helper functions `eql/query->
 ; => [:foo]
 ----
 
+=== API Docs
+
+Check complete API docs at linkL:https://cljdoc.org/d/edn-query-language/eql/0.0.3/api/edn-query-language.core[EQL cljdoc page].
+
 //== History
 //
 //EQL is a later baptized language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
