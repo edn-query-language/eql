@@ -26,7 +26,7 @@ of tools using it.
 
 EQL is a declarative way to make hierarchical (and possibly nested) selections of information about data requirements.
 
-EQL doesn't have its own syntax; it uses EDN to express the request, taking advantage of
+EQL doesn't have its own language; it uses EDN to express the request, taking advantage of
 the rich set of primitives provided by it.
 
 ==== EQL for selections
@@ -504,13 +504,16 @@ NOTE: Mutations and parameters are very like each other, their main difference
 is that once uses symbols as keys, the other uses one of the read options (properties,
 idents, joins).
 
-Mutations can appear anywhere in the query, root or sub-queries (although if that's supported
-by the parser it's up to each implementation).
+The EQL notation does not technically limit the combination of expressions that contain
+both query and mutation elements; however, implementations of EQL processing may choose
+to make restrictions on these combinations in order to enforce particular semantics.
 
 ==== Mutation Joins
 
-A mutation call can also have a join to represent the data to pull from the
-mutation output. The syntax is like a join that you do around the mutation:
+A mutation may have a return value, and that return value can be a graph; therefore, it
+makes sense that EQL support the ability to describe what portion of the available returned
+graph should be returned. The support for mutation graph return values is done by combining
+the syntax of a join with the syntax of a mutation:
 
 [source,clojure]
 ----
