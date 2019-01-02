@@ -358,13 +358,11 @@ map values can be anything. Here are more examples of parameterizing queries:
                              :key          :sub-query}]}]}
 ----
 
-WARNING: remember that unless you are writing on some EDN file, you have to quote the
-lists or Clojure tries to execute then, EQL expects then to come as data lists.
+WARNING: You'll need to use quote and unquote in CLJ files for calls, otherwise the lists will be evaluated as Clojure calls. Quote is not necessary in EDN files.
 
 === Query Meta
 
-Metadata from the query is stored in the AST and restore on the other way around. This
-allows adding an extra meta layer of information at the query level.
+Metadata can be stored on a query. The AST will encode the metadata so that transformations to/from an AST can preserve it.
 
 [source,clojure]
 ----
@@ -480,8 +478,9 @@ defines the syntax, here are some examples of how it could be written:
 
 === Mutations
 
-Mutations in EQL are used to represent operation calls, usually to do something
-that will cause a side effect on the world.
+Mutations in EQL are used to represent operation calls, usually to do something that will
+cause a side effect. Mutations as data allows that operation to behave much like event
+sourcing, and can be transparently applied locally, across a network, onto an event bus, etc.
 
 A mutation is represented by a list of two elements; the first is the symbol
 that names the mutation and the second is a map with input data.
