@@ -5,7 +5,11 @@
  {org.clojure/test.check {:mvn/version "0.10.0-alpha3"}}
 
  :aliases
- {:test
+ {:provided
+  {:extra-deps {org.clojure/clojure       {:mvn/version "1.9.0"}
+                org.clojure/clojurescript {:mvn/version "1.10.339"}}}
+
+  :test
   {:extra-paths ["test"]
    :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                             :sha     "5fb4fc46ad0bf2e0ce45eba5b9117a2e89166479"}}
