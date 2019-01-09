@@ -111,7 +111,7 @@ there is a good set of intersection in features between both, as:
 - a language to describe arbitrarily nested structures
 - support for mutations (operations to side effect the world)
 - support for parametrization
-- union queries for heterogeneous lists
+- union queries for query branching (select query according to some custom definition based on the data)
 
 GraphQL has a type system in its definition, and it is required for a GraphQL system to work. EQL has
 no such thing, and it dictates only the syntax but not the semantics. Some features in
