@@ -62,7 +62,7 @@ what it looks like for nested structures:
   [:artist/name]}]
 ----
 
-It works the same to represent nested lists:
+It works the same to represent nested sequences:
 
 [source,clojure]
 ----
@@ -80,7 +80,7 @@ It works the same to represent nested lists:
 ==== EQL for operations
 
 EQL also supports `mutations`, which are like side effect calls to an API. Mutations can
-appear at the root of some EQL transaction, and they look like Clojure function calls, example:
+appear on EQL transaction, and they look like Clojure function calls, example:
 
 [source,clojure]
 ----
@@ -93,7 +93,7 @@ More details in <<Mutations>>.
 
 On top of the Datomic Pull Syntax expression, EQL also supports:
 
-- Parametrization
+- <<Parameters>>
 - <<Mutations>>
 - <<Unions,Union Queries>>
 
@@ -128,7 +128,7 @@ common usages of it. Along with code examples from the transactions, after that,
 are going to provide the AST data that's equivalent to the transaction, the AST the
 recommended format to transform EQL transactions programmatically. The EQL format is
 great for users and interfaces, but to transform is easier if you don't have to deal
-with the syntax details. The EQL library provides functions to convert from and to
+with the syntax details/ambiguities. The EQL library provides functions to convert from and to
 AST from EQL.
 
 === Query / Transactions
