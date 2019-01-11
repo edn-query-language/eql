@@ -31,7 +31,7 @@ the rich set of primitives provided by it.
 
 ==== EQL for selections
 
-An easy way to get started is to think of a nested map and try to describe its shape. For example:
+An easy way to get started is to think of a map and try to describe its shape. For example:
 
 [source,clojure]
 ----
@@ -76,6 +76,11 @@ It works the same to represent nested sequences:
  {:album/tracks
   [:track/name]}]
 ----
+
+TIP: Although with just EQL you can't know if a key value is expected to be a single item or a sequence, you
+can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
+and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
+if the response of a key is a single item or a sequence.
 
 ==== EQL for operations
 
