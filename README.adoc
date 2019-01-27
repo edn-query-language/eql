@@ -548,6 +548,38 @@ query operations.
 
 === Clojure Specs
 
+The EQL library provides specs to validate and generate queries.
+
+==== Validation
+
+You can validate the query syntax using link:https://clojure.org/guides/spec[clojure.spec], here is an example:
+
+[source,clojure]
+----
+(s/valid? ::eql/query [:sample :query]) ; => true
+(s/valid? ::eql/query [#{:set}]) ; => false
+(s/valid? ::eql/query ['(call/op {})]) ; => true
+----
+
+NOTE: `s` is alias for `clojure.spec.alpha`
+
+You can use spec explain feature for more details:
+
+[source,clojure]
+----
+(s/explain ::query [#{:set}])
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-expr at: [:mutation :mutation] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-join at: [:mutation :mutation-join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/property at: [:prop] predicate: keyword?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/join at: [:join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/ident at: [:ident] predicate: vector?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/param-expr at: [:param-exp] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/special-property at: [:special] predicate: #{(quote *)}
+----
+
+I suggest you check the link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L133-L196[sources for the specs] for more details on parts that compose
+it, they will stay consistent and can be used to validate parts of the transaction as well.
+
 === AST Encode/Decode
 
 To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
