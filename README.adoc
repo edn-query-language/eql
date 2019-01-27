@@ -567,7 +567,7 @@ You can use spec explain feature for more details:
 
 [source,clojure]
 ----
-(s/explain ::query [#{:set}])
+(s/explain ::eql/query [#{:set}])
 ; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-expr at: [:mutation :mutation] predicate: seq?
 ; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-join at: [:mutation :mutation-join] predicate: map?
 ; In: [0] val: #{:set} fails spec: :edn-query-language.core/property at: [:prop] predicate: keyword?
