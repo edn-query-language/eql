@@ -96,7 +96,7 @@ More details in <<Mutations>>.
 
 === Datomic Pull Syntax comparison
 
-On top of the Datomic Pull Syntax expression, EQL also supports:
+On top of the link:https://docs.datomic.com/on-prem/pull.html[Datomic Pull Syntax] expression, EQL also supports:
 
 - <<Parameters>>
 - <<Mutations>>
