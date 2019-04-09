@@ -382,8 +382,8 @@ Metadata can be stored on a query. The AST will encode the metadata so that tran
 
 In EQL unions are used to specify polymorphic requirements, that means depending on some
 condition a different query might be chosen to fulfill the requirements. For example,
-in a messaging the app you have a single list, each entry on the chat log can be a `message`,
-`audio` or `photo`, each own having it query requirement. Here is it in code:
+a messaging app may have a single list, and each entry on the chat log can be a `message`,
+`audio` or `photo`, each having its own query requirement. Here it is in code:
 
 [source,clojure]
 ----
@@ -402,8 +402,8 @@ in a messaging the app you have a single list, each entry on the chat log can be
 
 Now to express this polymorphic requirement as the sub-query of the `:chat/entries` list
 we can use a map as the join value, and each entry on this map represents a possible
-sub-query, the way this information is used is up to the parser implementation, EQL only
-defines the syntax, here are some examples of how it could be written:
+sub-query. The way this information is used is up to the parser implementation; EQL only
+defines the syntax. Here are some examples of how it could be written:
 
 [source,clojure]
 ----
@@ -488,7 +488,7 @@ cause a side effect. Mutations as data allows that operation to behave much like
 sourcing, and can be transparently applied locally, across a network, onto an event bus, etc.
 
 A mutation is represented by a list of two elements; the first is the symbol
-that names the mutation and the second is a map with input data.
+that names the mutation, and the second is a map with input data.
 
 [source,clojure]
 ----
@@ -505,8 +505,8 @@ that names the mutation and the second is a map with input data.
    :type         :call}]}
 ----
 
-NOTE: Mutations and parameters are very like each other, their main difference
-is that once uses symbols as keys, the other uses one of the read options (properties,
+NOTE: Mutations and parameters are very similar, their main difference
+is that once uses symbols as keys, and the other uses one of the read options (properties,
 idents, joins).
 
 The EQL notation does not technically limit the combination of expressions that contain
@@ -543,7 +543,7 @@ the syntax of a join with the syntax of a mutation:
 == Library
 
 The package `edn-query-language.core` provides a suite of specs to validate queries and
-AST's, it also provides generators for the query and helper functions to common
+ASTs. It also provides generators for the query and helper functions to common
 query operations.
 
 === Clojure Specs
@@ -710,7 +710,7 @@ uses the Pathom connect index to generate queries that are valid according to th
 === AST Encode/Decode
 
 To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
-`eql/ast->query` helper functions. Here are some example usages:
+`eql/ast->query`. Here are some example usages:
 
 [source,clojure]
 ----
@@ -723,11 +723,11 @@ To convert between query and AST, EQL provides the helper functions `eql/query->
 
 === API Docs
 
-Check complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core[EQL cljdoc page].
+Check the complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core[EQL cljdoc page].
 
 //== History
 //
-//EQL is a later baptized language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
+//EQL is a derived language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
 //by link:https://github.com/omcljs/om[Om.next].
 
 //== Projects using EQL
