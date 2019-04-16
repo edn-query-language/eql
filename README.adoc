@@ -130,7 +130,7 @@ on how to programmatically manipulate EQL data structures.
 
 The following sections explain the features provided by the EQL syntax and the
 common usages of it. Along with code examples from the transactions, after that, we
-are going to provide the AST data that's equivalent to the transaction, the AST the
+are going to provide the AST data that's equivalent to the transaction, the AST is the
 recommended format to transform EQL transactions programmatically. The EQL format is
 great for users and interfaces, but to transform is easier if you don't have to deal
 with the syntax details/ambiguities. The EQL library provides functions to convert from and to
