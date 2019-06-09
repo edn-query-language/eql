@@ -5,6 +5,11 @@
             [clojure.test.check.generators :as gen #?@(:cljs [:include-macros true])]
             [clojure.test.check.properties]))
 
+(def ^:dynamic *shallow-conversion*
+  "Dynamic var.  When bound to true in the current thread calls to query->ast will no go past the
+  first level of children.  This is useful when you just want the AST for one layer of a query."
+  false)
+
 ;; query specs
 
 (def generators
@@ -340,7 +345,7 @@
              {:component component})
            (when query-root?
              {:query-root true})
-           (when-not (or (number? v) (= '... v))
+      (when-not (or (number? v) (= '... v) *shallow-conversion*)
              (cond
                (vector? v) {:children (into [] (map expr->ast) v)}
                (map? v) {:children [(union->ast v)]}
@@ -605,3 +610,10 @@
   information about a query that can be used to correlate with the query later."
   [query]
   (hash (normalize-query-variables query)))
+
+(defn query->shallow-ast
+  "Like query->ast, but does not follow joins.  Useful for efficiently getting just the top-level entries in
+   a large query."
+  [query]
+  (binding [*shallow-conversion* true]
+    (query->ast query)))

@@ -287,3 +287,17 @@
 (deftest test-query-id
   (is (= (eql/query-id '[:a :b {[:join "val"] [{(:c {:page 10}) [:d]}]}])
          -61421281)))
+
+
+(deftest shallow-conversion
+  (testing "requesting shallow conversion will only convert the first layer of a query"
+    (let [ast (eql/query->shallow-ast [:x
+                                       {:y [{:z [:a]}]}
+                                       {[:table 1] [:z {:other [:m :n]}]}
+                                       {:ujoin {:u1 [:x] :u2 [:y]}}])]
+      (is (= {:type     :root,
+              :children [{:type :prop, :dispatch-key :x, :key :x}
+                         {:type :join, :dispatch-key :y, :key :y, :query [{:z [:a]}]}
+                         {:type :join, :dispatch-key :table, :key [:table 1], :query [:z {:other [:m :n]}]}
+                         {:type :join, :dispatch-key :ujoin, :key :ujoin, :query {:u1 [:x], :u2 [:y]}}]}
+            ast)))))
