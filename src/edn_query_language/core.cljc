@@ -445,7 +445,7 @@
 
 (declare focus-subquery*)
 
-(defn- focus-subquery-union*
+(defn focus-subquery-union*
   [query-ast sub-ast]
   (let [s-index (into {} (map #(vector (:union-key %) %)) (:children sub-ast))]
     (assoc query-ast
@@ -458,7 +458,9 @@
         []
         (:children query-ast)))))
 
-(defn- focus-subquery*
+(defn focus-subquery*
+  "Internal implementation of focus-subquery, you can use this function directly if
+  you want to send AST in and get AST out (instead of query in / query out)."
   [query-ast sub-ast]
   (let [q-index (into {} (map #(vector (:key %) %)) (:children query-ast))]
     (assoc query-ast
