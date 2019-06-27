@@ -10,265 +10,245 @@
   first level of children.  This is useful when you just want the AST for one layer of a query."
   false)
 
-;; query specs
+#?(:clj  (def INCLUDE_SPECS true)
+   :cljs (goog-define INCLUDE_SPECS true))
 
-(def generators
-  {::gen-max-depth
-   4
+(when INCLUDE_SPECS
+  ;; query specs
 
-   ::gen-property
-   (fn gen-property [_] gen/keyword-ns)
+  (def generators
+    {::gen-max-depth
+     4
 
-   ::gen-special-property
-   (fn gen-special-property [_] (gen/return '*))
+     ::gen-property
+     (fn gen-property [_] gen/keyword-ns)
 
-   ::gen-ident-key
-   (fn gen-ident-key [_] gen/keyword-ns)
+     ::gen-special-property
+     (fn gen-special-property [_] (gen/return '*))
 
-   ::gen-ident-value
-   (fn gen-ident-value [_]
-     (gen/frequency [[15 gen/simple-type-printable]
-                     [1 (gen/return '_)]]))
+     ::gen-ident-key
+     (fn gen-ident-key [_] gen/keyword-ns)
 
-   ::gen-ident
-   (fn gen-ident [{::keys [gen-ident-key gen-ident-value] :as env}]
-     (gen/tuple
-       (gen-ident-key env)
-       (gen-ident-value env)))
+     ::gen-ident-value
+     (fn gen-ident-value [_]
+       (gen/frequency [[15 gen/simple-type-printable]
+                       [1 (gen/return '_)]]))
 
-   ::gen-params
-   (fn gen-params [_] (gen/map gen/any-printable gen/any-printable))
+     ::gen-ident
+     (fn gen-ident [{::keys [gen-ident-key gen-ident-value] :as env}]
+       (gen/tuple
+         (gen-ident-key env)
+         (gen-ident-value env)))
 
-   ::gen-join-key
-   (fn gen-join-key [{::keys [gen-property gen-ident gen-join-key-param-expr] :as env}]
-     (gen/frequency [[10 (gen-property env)]
-                     [3 (gen-ident env)]
-                     [1 (gen-join-key-param-expr env)]]))
+     ::gen-params
+     (fn gen-params [_] (gen/map gen/any-printable gen/any-printable))
 
-   ::gen-join-key-param-key
-   (fn gen-join-key-param-key [{::keys [gen-property gen-ident] :as env}]
-     (gen/one-of [(gen-property env) (gen-ident env)]))
+     ::gen-join-key
+     (fn gen-join-key [{::keys [gen-property gen-ident gen-join-key-param-expr] :as env}]
+       (gen/frequency [[10 (gen-property env)]
+                       [3 (gen-ident env)]
+                       [1 (gen-join-key-param-expr env)]]))
 
-   ::gen-join-key-param-expr
-   (fn gen-join-key-param-expr [{::keys [gen-join-key-param-key gen-params] :as env}]
-     (gen/let [q (gen-join-key-param-key env)
-               p (gen-params env)]
-       (list q p)))
+     ::gen-join-key-param-key
+     (fn gen-join-key-param-key [{::keys [gen-property gen-ident] :as env}]
+       (gen/one-of [(gen-property env) (gen-ident env)]))
 
-   ::gen-join
-   (fn gen-join [{::keys [gen-join-key gen-join-query] :as env}]
-     (gen/map (gen-join-key env) (gen-join-query env) {:num-elements 1}))
+     ::gen-join-key-param-expr
+     (fn gen-join-key-param-expr [{::keys [gen-join-key-param-key gen-params] :as env}]
+       (gen/let [q (gen-join-key-param-key env)
+                 p (gen-params env)]
+         (list q p)))
 
-   ::gen-join-query
-   (fn gen-join-query [{::keys [gen-query gen-union gen-recursion] :as env}]
-     (gen/frequency [[10 (gen-query env)]
-                     [2 (gen-union env)]
-                     [1 (gen-recursion env)]]))
+     ::gen-join
+     (fn gen-join [{::keys [gen-join-key gen-join-query] :as env}]
+       (gen/map (gen-join-key env) (gen-join-query env) {:num-elements 1}))
 
-   ::gen-union-key
-   (fn gen-union-key [_] gen/keyword-ns)
+     ::gen-join-query
+     (fn gen-join-query [{::keys [gen-query gen-union gen-recursion] :as env}]
+       (gen/frequency [[10 (gen-query env)]
+                       [2 (gen-union env)]
+                       [1 (gen-recursion env)]]))
 
-   ::gen-union
-   (fn gen-union [{::keys [gen-union-key gen-query] :as env}]
-     (gen/map (gen-union-key env) (gen-query env) {:min-elements 1}))
+     ::gen-union-key
+     (fn gen-union-key [_] gen/keyword-ns)
 
-   ::gen-depth
-   (fn gen-depth [_] (gen/large-integer* {:min 1 :max 5}))
+     ::gen-union
+     (fn gen-union [{::keys [gen-union-key gen-query] :as env}]
+       (gen/map (gen-union-key env) (gen-query env) {:min-elements 1}))
 
-   ::gen-recursion
-   (fn gen-recursion [{::keys [gen-depth] :as env}]
-     (gen/one-of [(gen-depth env) (gen/return '...)]))
+     ::gen-depth
+     (fn gen-depth [_] (gen/large-integer* {:min 1 :max 5}))
 
-   ::gen-param-expr-key
-   (fn gen-param-expr-key [{::keys [gen-property gen-join gen-ident] :as env}]
-     (gen/frequency [[20 (gen-property env)]
-                     [8 (gen-join env)]
-                     [4 (gen-ident env)]]))
+     ::gen-recursion
+     (fn gen-recursion [{::keys [gen-depth] :as env}]
+       (gen/one-of [(gen-depth env) (gen/return '...)]))
 
-   ::gen-param-expr
-   (fn gen-param-expr [{::keys [gen-param-expr-key gen-params] :as env}]
-     (gen/let [q (gen-param-expr-key env)
-               p (gen-params env)]
-       (list q p)))
+     ::gen-param-expr-key
+     (fn gen-param-expr-key [{::keys [gen-property gen-join gen-ident] :as env}]
+       (gen/frequency [[20 (gen-property env)]
+                       [8 (gen-join env)]
+                       [4 (gen-ident env)]]))
 
-   ::gen-query-expr
-   (fn gen-query-expr [{::keys [gen-property gen-join gen-ident gen-param-expr gen-special-property gen-mutation]
-                        :as    env}]
-     (gen/frequency [[20 (gen-property env)]
-                     [6 (gen-join env)]
-                     [1 (gen-ident env)]
-                     [2 (gen-param-expr env)]
-                     [1 (gen-mutation env)]
-                     [1 (gen-special-property env)]]))
+     ::gen-param-expr
+     (fn gen-param-expr [{::keys [gen-param-expr-key gen-params] :as env}]
+       (gen/let [q (gen-param-expr-key env)
+                 p (gen-params env)]
+         (list q p)))
 
-   ::gen-query
-   (fn gen-query [{::keys [gen-property gen-query-expr gen-max-depth] :as env}]
-     (if (> gen-max-depth 0)
-       (gen/vector (gen-query-expr (update env ::gen-max-depth dec)))
-       (gen/vector-distinct (gen-property env))))
+     ::gen-query-expr
+     (fn gen-query-expr [{::keys [gen-property gen-join gen-ident gen-param-expr gen-special-property gen-mutation]
+                          :as    env}]
+       (gen/frequency [[20 (gen-property env)]
+                       [6 (gen-join env)]
+                       [1 (gen-ident env)]
+                       [2 (gen-param-expr env)]
+                       [1 (gen-mutation env)]
+                       [1 (gen-special-property env)]]))
 
-   ::gen-mutation-key
-   (fn gen-mutation-key [_] gen/symbol)
+     ::gen-query
+     (fn gen-query [{::keys [gen-property gen-query-expr gen-max-depth] :as env}]
+       (if (> gen-max-depth 0)
+         (gen/vector (gen-query-expr (update env ::gen-max-depth dec)))
+         (gen/vector-distinct (gen-property env))))
 
-   ::gen-mutation-expr
-   (fn gen-mutation-expr [{::keys [gen-mutation-key gen-params] :as env}]
-     (gen/let [key (gen-mutation-key env)
-               val (gen-params env)]
-       (list key val)))
+     ::gen-mutation-key
+     (fn gen-mutation-key [_] gen/symbol)
 
-   ::gen-mutation-join
-   (fn mutation-join [{::keys [gen-mutation-expr gen-query] :as env}]
-     (gen/map (gen-mutation-expr env) (gen-query env) {:num-elements 1}))
+     ::gen-mutation-expr
+     (fn gen-mutation-expr [{::keys [gen-mutation-key gen-params] :as env}]
+       (gen/let [key (gen-mutation-key env)
+                 val (gen-params env)]
+         (list key val)))
 
-   ::gen-mutation
-   (fn gen-mutation [{::keys [gen-mutation-expr gen-mutation-join] :as env}]
-     (gen/frequency [[5 (gen-mutation-expr env)]
-                     [1 (gen-mutation-join env)]]))})
+     ::gen-mutation-join
+     (fn mutation-join [{::keys [gen-mutation-expr gen-query] :as env}]
+       (gen/map (gen-mutation-expr env) (gen-query env) {:num-elements 1}))
 
-(defn default-gen [name]
-  #((get generators name) generators))
+     ::gen-mutation
+     (fn gen-mutation [{::keys [gen-mutation-expr gen-mutation-join] :as env}]
+       (gen/frequency [[5 (gen-mutation-expr env)]
+                       [1 (gen-mutation-join env)]]))})
 
-(defn make-gen
-  [env name]
-  (let [env (merge generators env)
-        gen (get env name)]
-    (assert gen (str "No generator available for " name))
-    ((get env name) env)))
+  (defn default-gen [name]
+    #((get generators name) generators))
 
-(s/def ::property keyword?)
-(s/def ::special-property #{'*})
-(s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
-(s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
-(s/def ::key (s/or :prop ::property, :ident ::ident))
-(s/def ::join-key (s/or :prop ::property, :ident ::ident, :param-exp ::join-key-param-expr))
-(s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
-(s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
-(s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
-(s/def ::recursion (s/or :depth ::recursion-depth, :unbounded #{'...}))
+  (defn make-gen
+    [env name]
+    (let [env (merge generators env)
+          gen (get env name)]
+      (assert gen (str "No generator available for " name))
+      ((get env name) env)))
 
-(s/def ::join-query
-  (s/with-gen
-    (s/or :query ::query
-          :union ::union
-          :recursion ::recursion)
-    (default-gen ::gen-join-query)))
+  (s/def ::property keyword?)
+  (s/def ::special-property #{'*})
+  (s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
+  (s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
+  (s/def ::key (s/or :prop ::property, :ident ::ident))
+  (s/def ::join-key (s/or :prop ::property, :ident ::ident, :param-exp ::join-key-param-expr))
+  (s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
+  (s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
+  (s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
+  (s/def ::recursion (s/or :depth ::recursion-depth, :unbounded #{'...}))
 
-(s/def ::params
-  (s/with-gen map? (default-gen ::gen-params)))
+  (s/def ::join-query
+    (s/with-gen
+      (s/or :query ::query
+            :union ::union
+            :recursion ::recursion)
+      (default-gen ::gen-join-query)))
 
-(s/def ::param-expr-key
-  (s/with-gen
+  (s/def ::params
+    (s/with-gen map? (default-gen ::gen-params)))
+
+  (s/def ::param-expr-key
+    (s/with-gen
+      (s/or :prop ::property
+            :join ::join
+            :ident ::ident)
+      (default-gen ::gen-param-expr-key)))
+
+  (s/def ::param-expr
+    (s/with-gen
+      (s/and seq? (s/cat :expr ::param-expr-key :params (s/? ::params)))
+      (default-gen ::gen-param-expr)))
+
+  (s/def ::join-key-param-key (s/or :prop ::property :ident ::ident))
+
+  (s/def ::join-key-param-expr
+    (s/with-gen
+      (s/and seq? (s/cat :expr ::join-key-param-key :params (s/? ::params)))
+      (default-gen ::gen-join-key-param-expr)))
+
+  (s/def ::mutation-key (s/with-gen symbol? (default-gen ::gen-mutation-key)))
+
+  (s/def ::mutation-expr
+    (s/with-gen
+      (s/and seq? (s/cat :mutate-key ::mutation-key :params (s/? ::params)))
+      (default-gen ::gen-mutation-expr)))
+
+  (s/def ::mutation-join
+    (s/map-of ::mutation-expr ::query :count 1 :conform-keys true))
+
+  (s/def ::mutation
+    (s/or :mutation ::mutation-expr
+          :mutation-join ::mutation-join))
+
+  (s/def ::query-expr
     (s/or :prop ::property
           :join ::join
-          :ident ::ident)
-    (default-gen ::gen-param-expr-key)))
+          :ident ::ident
+          :mutation ::mutation
+          :param-exp ::param-expr
+          :special ::special-property))
 
-(s/def ::param-expr
-  (s/with-gen
-    (s/and seq? (s/cat :expr ::param-expr-key :params (s/? ::params)))
-    (default-gen ::gen-param-expr)))
+  (s/def ::query
+    (s/coll-of ::query-expr :kind vector? :gen (default-gen ::gen-query)))
 
-(s/def ::join-key-param-key (s/or :prop ::property :ident ::ident))
+  ;; ast specs
 
-(s/def ::join-key-param-expr
-  (s/with-gen
-    (s/and seq? (s/cat :expr ::join-key-param-key :params (s/? ::params)))
-    (default-gen ::gen-join-key-param-expr)))
+  (s/def :edn-query-language.ast/query ::join-query)
+  (s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol?))
+  (s/def :edn-query-language.ast/dispatch-key (s/or :prop ::property :sym symbol?))
+  (s/def :edn-query-language.ast/union-key ::property)
 
-(s/def ::mutation-key (s/with-gen symbol? (default-gen ::gen-mutation-key)))
+  (s/def :edn-query-language.ast/children
+    (s/coll-of :edn-query-language.ast/node))
 
-(s/def ::mutation-expr
-  (s/with-gen
-    (s/and seq? (s/cat :mutate-key ::mutation-key :params (s/? ::params)))
-    (default-gen ::gen-mutation-expr)))
+  (s/def :edn-query-language.ast/root
+    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/children])
+      #(= :root (:type %))
+      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
-(s/def ::mutation-join
-  (s/map-of ::mutation-expr ::query :count 1 :conform-keys true))
+  (defmulti node-type :type)
 
-(s/def ::mutation
-  (s/or :mutation ::mutation-expr
-        :mutation-join ::mutation-join))
+  (defmethod node-type nil [_]
+    (s/keys :req-un [:edn-query-language.ast/key :edn-query-language.ast/dispatch-key]))
 
-(s/def ::query-expr
-  (s/or :prop ::property
-        :join ::join
-        :ident ::ident
-        :mutation ::mutation
-        :param-exp ::param-expr
-        :special ::special-property))
+  (defmethod node-type :prop [_]
+    (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key]))
 
-(s/def ::query
-  (s/coll-of ::query-expr :kind vector? :gen (default-gen ::gen-query)))
+  (defmethod node-type :join [_]
+    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key :edn-query-language.ast/query] :opt-un [:edn-query-language.ast/children])
+      #(if (-> % :query first (= :recursion)) % (if (contains? % :children) % false))
+      (fn [x] (every? (comp #(contains? #{:prop :join :union :call nil} %) :type) (:children x)))))
 
-(comment
-  (gen/sample (make-gen {::gen-params
-                         (fn [_] (gen/return {:param "value"}))}
-                ::gen-query)
-    10)
+  (defmethod node-type :union [_]
+    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/query :edn-query-language.ast/children])
+      #(every? (comp #{:union-entry} :type) (:children %))))
 
-  ; example of customizing parts of the query generator
-  (let [system (assoc generators
-                 ::gen-params
-                 (fn [_] (gen/map (gen/elements [:param :foo/param]) gen/string-ascii))
+  (defmethod node-type :union-entry [_]
+    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/union-key :edn-query-language.ast/query :edn-query-language.ast/children])
+      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
-                 ::gen-property
-                 (fn [_] (gen/elements [:id :name :title :foo :bar :other :price :namespaced/value]))
+  (defmethod node-type :call [_]
+    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params] :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
+      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
-                 ::gen-ident-key
-                 (fn [_] (gen/elements [:user/by-id :other/by-id]))
+  (defmethod node-type :root [_]
+    (s/spec :edn-query-language.ast/root))
 
-                 ::gen-ident-value
-                 (fn [_] gen/string-ascii)
-
-                 ::gen-mutation-key
-                 (fn [_] (gen/elements '[do-something create/this-thing operation.on/space])))]
-    (gen/sample ((::gen-query system) system))))
-
-;; ast specs
-
-(s/def :edn-query-language.ast/query ::join-query)
-(s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol?))
-(s/def :edn-query-language.ast/dispatch-key (s/or :prop ::property :sym symbol?))
-(s/def :edn-query-language.ast/union-key ::property)
-
-(s/def :edn-query-language.ast/children
-  (s/coll-of :edn-query-language.ast/node))
-
-(s/def :edn-query-language.ast/root
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/children])
-    #(= :root (:type %))
-    (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
-
-(defmulti node-type :type)
-
-(defmethod node-type nil [_]
-  (s/keys :req-un [:edn-query-language.ast/key :edn-query-language.ast/dispatch-key]))
-
-(defmethod node-type :prop [_]
-  (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key]))
-
-(defmethod node-type :join [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key :edn-query-language.ast/query] :opt-un [:edn-query-language.ast/children])
-    #(if (-> % :query first (= :recursion)) % (if (contains? % :children) % false))
-    (fn [x] (every? (comp #(contains? #{:prop :join :union :call nil} %) :type) (:children x)))))
-
-(defmethod node-type :union [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/query :edn-query-language.ast/children])
-    #(every? (comp #{:union-entry} :type) (:children %))))
-
-(defmethod node-type :union-entry [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/union-key :edn-query-language.ast/query :edn-query-language.ast/children])
-    (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
-
-(defmethod node-type :call [_]
-  (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params] :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
-    (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
-
-(defmethod node-type :root [_]
-  (s/spec :edn-query-language.ast/root))
-
-(s/def :edn-query-language.ast/type (set (keys (methods node-type))))
-(s/def :edn-query-language.ast/node (s/multi-spec node-type :type))
+  (s/def :edn-query-language.ast/type (set (keys (methods node-type))))
+  (s/def :edn-query-language.ast/node (s/multi-spec node-type :type)))
 
 ;; library
 
@@ -320,18 +300,10 @@
       (when-not (nil? component)
         {:component component}))))
 
-(s/fdef query->ast
-  :args (s/cat :query (s/nilable ::query))
-  :ret :edn-query-language.ast/root)
-
 (defn query->ast1
   "Call query->ast and return the first children."
   [query-expr]
   (-> (query->ast query-expr) :children first))
-
-(s/fdef query->ast1
-  :args (s/cat :query ::query)
-  :ret :edn-query-language.ast/root)
 
 (defn join->ast [join]
   (let [query-root? (-> join meta :query-root)
@@ -426,20 +398,12 @@
   "Given an AST convert it back into a query expression."
   (ast->expr query-ast true))
 
-(s/fdef ast->query
-  :args (s/cat :ast :edn-query-language.ast/node)
-  :ret :edn-query-language.ast/root)
-
 (defn ident?
   "Check if x is a EQL ident."
   [x]
   (and (vector? x)
        (keyword? (first x))
        (= 2 (count x))))
-
-(s/fdef ident?
-  :args (s/cat :x any?)
-  :ret boolean?)
 
 ;; query processing helpers
 
@@ -495,10 +459,6 @@
         sub-ast   (query->ast sub-query)]
     (ast->expr (focus-subquery* query-ast sub-ast) true)))
 
-(s/fdef focus-subquery
-  :args (s/cat :query ::query :sub-query ::query)
-  :ret ::query)
-
 (defn transduce-children
   "Recursivelly transduce children on the AST, you can use this to apply filter/transformations
   on a whole AST. Each iteration of the transducer will get a single AST node to process.
@@ -517,18 +477,10 @@
       (fn [children]
         (into [] (comp xform (map #(transduce-children xform %))) children)))))
 
-(s/fdef transduce-children
-  :args (s/cat :xform fn? :node :edn-query-language.ast/node)
-  :ret :edn-query-language.ast/node)
-
 (defn union-children?
   "Given an AST point, check if the children is a union query type."
   [ast]
   (= :union (some-> ast :children first :type)))
-
-(s/fdef union-children?
-  :args (s/cat :ast :edn-query-language.ast/node)
-  :ret boolean?)
 
 (defn update-property-param
   "Add property param, eg:
@@ -544,13 +496,6 @@
       (list k (apply f p args)))
 
     (list x (apply f {} args))))
-
-(s/fdef update-property-param
-  :args (s/cat :x (s/or :property ::property
-                        :expr ::param-expr)
-               :f fn?
-               :args (s/* any?))
-  :ret ::param-expr)
 
 (defn merge-asts
   "Merges two ast's."
@@ -578,19 +523,11 @@
     qa
     (:children qb)))
 
-(s/fdef merge-asts
-  :args (s/cat :qa :edn-query-language.ast/node, :qb :edn-query-language.ast/node)
-  :ret (s/nilable :edn-query-language.ast/node))
-
 (defn merge-queries
   "Merges two queries"
   [qa qb]
   (some-> (merge-asts (query->ast qa) (query->ast qb))
     (ast->query)))
-
-(s/fdef merge-queries
-  :args (s/cat :qa (s/nilable ::query), :qb (s/nilable ::query))
-  :ret (s/nilable ::query))
 
 (defn normalize-query-variables
   "Converts ident values and param values to ::p/var."
@@ -619,3 +556,47 @@
   [query]
   (binding [*shallow-conversion* true]
     (query->ast query)))
+
+(when INCLUDE_SPECS
+  (s/fdef query->ast
+    :args (s/cat :query (s/nilable ::query))
+    :ret :edn-query-language.ast/root)
+
+  (s/fdef query->ast1
+    :args (s/cat :query ::query)
+    :ret :edn-query-language.ast/root)
+
+  (s/fdef ast->query
+    :args (s/cat :ast :edn-query-language.ast/node)
+    :ret :edn-query-language.ast/root)
+
+  (s/fdef ident?
+    :args (s/cat :x any?)
+    :ret boolean?)
+
+  (s/fdef focus-subquery
+    :args (s/cat :query ::query :sub-query ::query)
+    :ret ::query)
+
+  (s/fdef transduce-children
+    :args (s/cat :xform fn? :node :edn-query-language.ast/node)
+    :ret :edn-query-language.ast/node)
+
+  (s/fdef union-children?
+    :args (s/cat :ast :edn-query-language.ast/node)
+    :ret boolean?)
+
+  (s/fdef update-property-param
+    :args (s/cat :x (s/or :property ::property
+                          :expr ::param-expr)
+                 :f fn?
+                 :args (s/* any?))
+    :ret ::param-expr)
+
+  (s/fdef merge-asts
+    :args (s/cat :qa :edn-query-language.ast/node, :qb :edn-query-language.ast/node)
+    :ret (s/nilable :edn-query-language.ast/node))
+
+  (s/fdef merge-queries
+    :args (s/cat :qa (s/nilable ::query), :qb (s/nilable ::query))
+    :ret (s/nilable ::query)))

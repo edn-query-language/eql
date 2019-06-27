@@ -707,6 +707,16 @@ One more example changing many definitions:
 If you wanna see an even more advanced usage, you can check link:https://github.com/wilkerlucio/pathom/blob/master/src/com/wsscode/pathom/connect/gen.cljc[Pathom connect generator], which
 uses the Pathom connect index to generate queries that are valid according to the user property graph.
 
+==== Removing specs on Clojurescript
+
+If you are not using the specs provided by Pathom you can free some build space by
+eliding then. To do that you need to set the Clojurescript compiler options with:
+
+[source,clojure]
+----
+{:closure-defines {edn-query-language.core.INCLUDE_SPECS false}}
+----
+
 === AST Encode/Decode
 
 To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
