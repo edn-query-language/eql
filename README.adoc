@@ -709,7 +709,7 @@ uses the Pathom connect index to generate queries that are valid according to th
 
 ==== Removing specs on Clojurescript
 
-If you are not using the specs provided by Pathom you can free some build space by
+If you are not using the specs provided by EQL you can free some build space by
 eliding then. To do that you need to set the Clojurescript compiler options with:
 
 [source,clojure]
