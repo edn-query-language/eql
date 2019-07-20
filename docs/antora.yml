@@ -1,0 +1,6 @@
+name: eql
+title: EQL
+version: 1.0.0
+start_page: ROOT:what-is-eql.adoc
+nav:
+  - modules/ROOT/nav.adoc

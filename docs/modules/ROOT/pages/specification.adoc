@@ -1,0 +1,416 @@
+= Specification
+
+The following sections explain the features provided by the EQL syntax and the
+common usages of it. Along with code examples from the transactions, after that, we
+are going to provide the AST data that's equivalent to the transaction, the AST is the
+recommended format to transform EQL transactions programmatically. The EQL format is
+great for users and interfaces, but to transform is easier if you don't have to deal
+with the syntax details/ambiguities. The EQL library provides functions to convert from and to
+AST from EQL.
+
+In the end of this section you will also find the Clojure Spec formal specification
+for the EQL syntax.
+
+== Query / Transactions
+
+An EQL transaction is represented by an EDN vector.
+
+Examples:
+
+[source,clojure]
+----
+[] ; empty transaction
+
+; ast
+
+{:type :root, :children []}
+----
+
+A transaction that only contains reads is commonly called a `query`, but notice that
+at the syntax level, it has no difference.
+
+== Properties
+
+Properties in `EQL` are expressed as Clojure keywords; they can be simple or qualified
+keywords, and they express the property been requested.
+
+Examples:
+
+[source,clojure]
+----
+[:album/name :album/year]
+
+; ast
+
+{:type     :root
+ :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
+            {:type :prop, :dispatch-key :album/year, :key :album/year}]}
+----
+
+== Joins
+
+Joins are used to describe nesting in the request transaction. They are represented as
+EDN maps, always with a single entry, the entry key is the property to join on, and the
+entry value is a sub-query to run.
+
+Examples:
+
+[source,clojure]
+----
+[{:favorite-albums
+  [:album/name :album/year]}]
+
+; ast
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :favorite-albums
+             :key          :favorite-albums
+             :query        [:album/name :album/year]
+             :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                            {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}
+----
+
+Nested joins example:
+
+[source,clojure]
+----
+[{:favorite-albums
+  [:album/name :album/year
+   {:album/tracks
+    [:track/name
+     :track/duration]}]}]
+
+; ast
+
+{:type :root
+ :children
+ [{:type         :join
+   :dispatch-key :favorite-albums
+   :key          :favorite-albums
+
+   :query        [:album/name
+                  :album/year
+                  {:album/tracks [:track/name :track/duration]}]
+
+   :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                  {:type :prop, :dispatch-key :album/year, :key :album/year}
+                  {:type         :join
+                   :dispatch-key :album/tracks
+                   :key          :album/tracks
+                   :query        [:track/name :track/duration]
+                   :children     [{:type :prop, :dispatch-key :track/name, :key :track/name}
+                                  {:type         :prop
+                                   :dispatch-key :track/duration
+                                   :key          :track/duration}]}]}]}
+----
+
+== Idents
+
+Idents are represented by a vector with two elements, where the first is a keyword and
+the second can be anything. They are like link:http://blog.datomic.com/2014/02/datomic-lookup-refs.html[lookup refs on Datomic],
+in general, they can provide an address-like thing, and their use and semantic might
+vary from system to system.
+
+Examples:
+
+[source,clojure]
+----
+[[:customer/id 123]]
+
+; ast
+
+{:type :root
+ :children [{:type :prop, :dispatch-key :customer/id, :key [:customer/id 123]}]}
+----
+
+Note that this time in the AST the `:dispatch-key` and `:key` got different values this
+time, the `:dispatch-key` been just the `ident key` while the `:key` contains the
+full thing.
+
+It's common to use an ident as a join key to start a query for some entity:
+
+[source,clojure]
+----
+[{[:customer/id 123]
+  [:customer/name :customer/email]}]
+
+; ast
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :customer/id
+             :key          [:customer/id 123]
+             :query        [:customer/name :customer/email]
+             :children     [{:type :prop, :dispatch-key :customer/name, :key :customer/name}
+                            {:type         :prop
+                             :dispatch-key :customer/email
+                             :key          :customer/email}]}]}
+----
+
+== Parameters
+
+EQL properties, joins, and idents have support for parametrization. This allows the
+query to provide an extra dimension of information about the requested data. A parameter
+is expressed by wrapping the thing with an EDN list, like so:
+
+[source,clojure]
+----
+; without params
+[:foo]
+
+; with params
+[(:foo {:with "params"})]
+
+; ast
+
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :foo
+             :key          :foo
+             :params       {:with "params"}
+             :meta         {:line 1, :column 15}}]}
+----
+
+Note on the AST side it gets a new `:params` key. Params *must* always be maps, the
+map values can be anything. Here are more examples of parameterizing queries:
+
+[source,clojure]
+----
+; ident with params
+
+[([:ident "value"] {:with "param"})]
+
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "param"}
+             :meta         {:line 1, :column 15}}]}
+
+; join with params wrap the key with the list
+
+[{(:join-key {:with "params"})
+  [:sub-query]}]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
+
+; ident join with params
+
+[{([:ident "value"] {:with "params"})
+  [:sub-query]}]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "params"}
+             :meta         {:line 1 :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
+
+; alternate syntax to add params on joins (wrap the entire map, AST result is the same)
+
+[({:join-key
+   [:sub-query]}
+  {:with "params"})]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
+----
+
+WARNING: You'll need to use quote and unquote in CLJ files for calls, otherwise the lists will be evaluated as Clojure calls. Quote is not necessary in EDN files.
+
+== Query Meta
+
+Metadata can be stored on a query. The AST will encode the metadata so that transformations to/from an AST can preserve it.
+
+[source,clojure]
+----
+(with-meta [] {:meta "data"})
+
+; ast
+
+{:type :root, :children [], :meta {:meta "data"}}
+----
+
+== Unions
+
+In EQL unions are used to specify polymorphic requirements, that means depending on some
+condition a different query might be chosen to fulfill the requirements. For example,
+a messaging app may have a single list, and each entry on the chat log can be a `message`,
+`audio` or `photo`, each having its own query requirement. Here it is in code:
+
+[source,clojure]
+----
+; message query
+[:message/id :message/text :chat.entry/timestamp]
+
+; audio query
+[:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+
+; photo query
+[:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]
+
+; list query
+[{:chat/entries ???}] ; what goes there?
+----
+
+Now to express this polymorphic requirement as the sub-query of the `:chat/entries` list
+we can use a map as the join value, and each entry on this map represents a possible
+sub-query. The way this information is used is up to the parser implementation; EQL only
+defines the syntax. Here are some examples of how it could be written:
+
+[source,clojure]
+----
+; in this example, the selection is made by looking if the processed entry contains
+; some value on the key used for its selection
+[{:chat/entries
+  {:message/id [:message/id :message/text :chat.entry/timestamp]
+   :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :photo/id   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; in this case, we give a type name and use as the key, this usually requires some
+; out of band configuration to know how to pull this data from each entry to use
+; as the comparison
+[{:chat/entries
+  {:entry.type/message [:message/id :message/text :chat.entry/timestamp]
+   :entry.type/audio   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :entry.type/photo   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; ast for the first example
+
+{:type :root
+ :children
+ [{:type         :join
+   :dispatch-key :chat/entries
+   :key          :chat/entries
+   :query        {:message/id [:message/id :message/text :chat.entry/timestamp]
+                  :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                  :photo/id   [:photo/id
+                               :photo/url
+                               :photo/width
+                               :photo/height
+                               :chat.entry/timestamp]}
+   :children     [{:type :union
+                   :query
+                         {:message/id [:message/id :message/text :chat.entry/timestamp]
+                          :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                          :photo/id   [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]}
+                   :children
+                         [{:type      :union-entry
+                           :union-key :message/id
+                           :query     [:message/id :message/text :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :message/id, :key :message/id}
+                                       {:type :prop, :dispatch-key :message/text, :key :message/text}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :audio/id
+                           :query     [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :audio/id, :key :audio/id}
+                                       {:type :prop, :dispatch-key :audio/url, :key :audio/url}
+                                       {:type         :prop
+                                        :dispatch-key :audio/duration
+                                        :key          :audio/duration}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :photo/id
+                           :query     [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :photo/id, :key :photo/id}
+                                       {:type :prop, :dispatch-key :photo/url, :key :photo/url}
+                                       {:type :prop, :dispatch-key :photo/width, :key :photo/width}
+                                       {:type :prop, :dispatch-key :photo/height, :key :photo/height}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}]}]}]}
+----
+
+== Mutations
+
+Mutations in EQL are used to represent operation calls, usually to do something that will
+cause a side effect. Mutations as data allows that operation to behave much like event
+sourcing, and can be transparently applied locally, across a network, onto an event bus, etc.
+
+A mutation is represented by a list of two elements; the first is the symbol
+that names the mutation, and the second is a map with input data.
+
+[source,clojure]
+----
+[(call.some/operation {:data "input"})]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 610, :column 17}
+   :type         :call}]}
+----
+
+NOTE: Mutations and parameters are very similar, their main difference
+is that once uses symbols as keys, and the other uses one of the read options (properties,
+idents, joins).
+
+The EQL notation does not technically limit the combination of expressions that contain
+both query and mutation elements; however, implementations of EQL processing may choose
+to make restrictions on these combinations in order to enforce particular semantics.
+
+=== Mutation Joins
+
+A mutation may have a return value, and that return value can be a graph; therefore, it
+makes sense that EQL support the ability to describe what portion of the available returned
+graph should be returned. The support for mutation graph return values is done by combining
+the syntax of a join with the syntax of a mutation:
+
+[source,clojure]
+----
+[{(call.some/operation {:data "input"})
+  [:response :key-a :key-b]}]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 612 :column 18}
+   :type         :call
+   :query        [:response :key-a :key-b]
+   :children     [{:type :prop, :dispatch-key :response, :key :response}
+                  {:type :prop, :dispatch-key :key-a, :key :key-a}
+                  {:type :prop, :dispatch-key :key-b, :key :key-b}]}]}
+----

@@ -1,0 +1,13 @@
+site:
+  title: EDN Query Language
+  url: http://edn-query-language.org
+  start_page: eql::what-is-eql.adoc
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
