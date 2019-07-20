@@ -4,7 +4,7 @@ site:
   start_page: eql::what-is-eql.adoc
 content:
   sources:
-    - url: .
+    - url: git@github.com:edn-query-language/eql.git
       branches: HEAD
       start_path: docs-src
 ui:
