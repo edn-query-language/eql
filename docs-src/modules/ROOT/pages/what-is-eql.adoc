@@ -74,9 +74,9 @@ More details in <<Mutations>>.
 
 On top of the link:https://docs.datomic.com/on-prem/pull.html[Datomic Pull Syntax] expression, EQL also supports:
 
-- <<Parameters>>
-- <<Mutations>>
-- <<Unions,Union Queries>>
+- xref:specification#_parameters[Parameters]
+- xref:specification#_mutations[Mutations]
+- xref:specification#_unions[Union Queries]
 
 Check the links on each for more details.
 
@@ -99,5 +99,5 @@ no such thing, and it dictates only the syntax but not the semantics. Some featu
 GraphQL just doesn't make sense in EQL, like fragments, since EQL is already a data format (EDN),
 it's easy to compose data as you would do in a regular Clojure program, for that reason
 many features are not necessary because EQL is a parseable data format with all the Clojure
-tools already available to operate on top of it. Also read the <<AST Encode/Decode,AST>> section for more information
-on how to programmatically manipulate EQL data structures.
+tools already available to operate on top of it. Also read the xref:library#_ast_encodedecode[AST Encode/Decode]
+section for more information on how to programmatically manipulate EQL data structures.

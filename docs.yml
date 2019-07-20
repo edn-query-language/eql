@@ -9,7 +9,13 @@ content:
       start_path: docs-src
 ui:
   bundle:
-    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/master/raw/build/ui-bundle.zip?job=bundle-stable
+    url: /Users/wilker.lucio/Development/third-part/docs-ui/build/ui-bundle.zip
     snapshot: true
 output:
   dir: ./docs
+asciidoc:
+  attributes:
+    experimental: ''
+    tabs: tabs
+    toc: ~
+    xrefstyle: short
