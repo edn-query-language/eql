@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Library | EDN Query Language</title>
+    <link rel="canonical" href="http://edn-query-language.org/eql/1.0.0/library.html">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="schema.dcterms" href="https://purl.org/dc/terms/">
+    <meta name="dcterms.subject" content="eql">
+    <meta name="dcterms.identifier" content="1.0.0">
+    <meta name="generator" content="Antora 2.0.0">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar" id="topbar">
+    <div class="container">
+      <div id="topbar-menu" class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="http://edn-query-language.org">EDN Query Language</a>
+
+          <a class="navbar-item component" href="what-is-eql.html"><span class="title">EQL</span> <span class="version">1.0.0</span></a>
+        </div>
+        <div class="navbar-end">
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body container">
+<nav class="nav">
+<div class="nav-menu">
+<ul class="nav-list">
+  <li class="nav-item is-active" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="what-is-eql.html">What is EQL?</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="specification.html">Specification</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="clojure-specs.html">Clojure Specs</a>
+    </span>
+  </li>
+  <li class="nav-item is-current-page is-active" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="library.html">Library</a>
+    </span>
+  </li>
+</ul>
+  </li>
+</ul>
+</div>
+</nav>
+<aside class="toc sidebar">
+  <div class="toc-menu"></div>
+</aside>
+<main class="article" data-ceiling="topbar">
+  <div class="article-header">
+<button class="nav-control"></button>
+<nav class="crumbs" aria-label="breadcrumbs">
+  <ul>
+    <li class="crumb"><a href="what-is-eql.html">EQL</a></li>
+    <li class="crumb"><a href="library.html">Library</a></li>
+  </ul>
+</nav>
+<div class="tools" role="navigation">
+  <ul>
+    <li class="tool edit"><a href="file:///Users/wilker.lucio/Development/eql/docs-src/modules/ROOT/pages/library.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
+  </ul>
+</div>
+  </div>
+<article class="doc">
+<h1 class="page">Library</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The package <code>edn-query-language.core</code> provides a suite of specs to validate queries and
+ASTs. It also provides generators for the query and helper functions to common
+query operations.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_clojure_specs"><a class="anchor" href="#_clojure_specs"></a>Clojure Specs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The EQL library provides specs to validate and generate queries.</p>
+</div>
+<div class="sect2">
+<h3 id="_validation"><a class="anchor" href="#_validation"></a>Validation</h3>
+<div class="paragraph">
+<p>You can validate the query syntax using <a href="https://clojure.org/guides/spec">clojure.spec</a>, here is an example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(s/valid? ::eql/query [:sample :query]) ; =&gt; true
+(s/valid? ::eql/query [#{:set}]) ; =&gt; false
+(s/valid? ::eql/query ['(call/op {})]) ; =&gt; true</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<code>s</code> is alias for <code>clojure.spec.alpha</code>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can use spec explain feature for more details:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(s/explain ::eql/query [#{:set}])
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-expr at: [:mutation :mutation] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-join at: [:mutation :mutation-join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/property at: [:prop] predicate: keyword?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/join at: [:join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/ident at: [:ident] predicate: vector?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/param-expr at: [:param-exp] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/special-property at: [:special] predicate: #{(quote *)}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>I suggest you check the <a href="https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L133-L196">sources for the specs</a> for more details on parts that compose
+it, they will stay consistent and can be used to validate parts of the transaction as well.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_generation"><a class="anchor" href="#_generation"></a>Generation</h3>
+<div class="paragraph">
+<p>EQL also provides built-in generators, the main intended usage for it is to write generative
+tests for parser implementations.</p>
+</div>
+<div class="paragraph">
+<p>Basic example to generate random queries:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(gen/sample (s/gen ::query) 10)
+=&gt;
+([]
+ []
+ [(:?./*_ {}) :z/ZH]
+ []
+ [#:J{:w {:c/!V [#:YY{:u [:u1/X?!
+                          #:r94{:*+ [#:aG{:YA 2} :t!o/Ya1 :XL/HR #:!-Q{:b_ []}]}
+                          :OP/E]}
+                 :.qE/Nd-],
+          :j./!T [[:p/h*y :f?1]
+                  #:s*{:-W []}
+                  (NG_
+                   {[] #{}, [4] (0.5 :_ -3 -Ch), #{} #{}, #{-1 {##-Inf ?.1/e?A}} {}})],
+          :z/s+ []}}
+  :-_/_
+  :H/E
+  :Y/xD]
+ [:?7/w :iO/! (:r/!N {{-2.0 false} [], [] [], [:P7] [0 J1]})]
+ [:+Bi/-K :!8*/r0 :?/Cio]
+ [:*.-/R* :+BT/W :-l8/c :Ih/V [:RE/- "0&gt;WwI`u"] :H/vT]
+ [:z+8/g]
+ [])</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<code>gen</code> is alias for <code>clojure.test.check.generators</code>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Although fully random queries can be interesting to test some parser edge cases, in many
+situations you will may want to constraint how the query is generated, with this in mind
+EQL provides a way to enable this kind of customization. To get a sense of what you can
+customize <a href="https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L10-L121">you can take a look at the default implementation for each default generator</a>,
+any of those keys can be tuned to constraint how the query is generated.</p>
+</div>
+<div class="paragraph">
+<p>To demonstrate how to use this, let&#8217;s customize the generator to limit the properties it generates
+to a fixed set we pre defined:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(gen/sample (eql/make-gen {::eql/gen-property ; <i class="conum" data-value="1"></i><b>(1)</b>
+                       (fn [_] (gen/elements [:id :name :title :foo :bar]))}
+              ::eql/gen-query) ; <i class="conum" data-value="2"></i><b>(2)</b>
+  10)
+=&gt;
+([]
+ []
+ []
+ [[:X/q6 1] :name :title]
+ [({:title [(L {#{} [], () [], #{-5} ()})
+            (:name {{#{} {}} :., {} {}})
+            {:name [:bar :title]}]}
+   {[*+-] #{0.5625 #uuid"edf051fb-ab28-42d0-a941-152c4e87b060"},
+    #{#uuid"712e7415-5148-400b-99db-cfb79004700e" -1/2} (),
+    {} (:F/le9 #uuid"5ad52713-d13a-4888-bd92-2d1541c0387b" "" true)})
+  {(:foo
+    {[(2.0 false) z/NO] [I./j #uuid"eef64a1d-8055-4ae7-95be-06bdc4f9cefd"], {} [""]}) [:id
+                                                                                       ({:id [:name
+                                                                                              *]}
+                                                                                        {})]}]
+ [:id :id]
+ [{:foo [:name * [:mO/D MZ_/e0Z] :bar :foo]}]
+ []
+ [:bar]
+ [:foo])</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We send a map to <code>eql/make-gen</code> to override some of the generator settings, any non
+defined keys will fallback to default implementation</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Select which generator to use, this is useful to generate only sub-parts if needed</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>One more example changing many definitions:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(let [system (assoc generators
+               ::gen-params
+               (fn [_] (gen/map (gen/elements [:param :foo/param]) gen/string-ascii))
+
+               ::gen-property
+               (fn [_] (gen/elements [:id :name :title :foo :bar :other :price :namespaced/value]))
+
+               ::gen-ident-key
+               (fn [_] (gen/elements [:user/by-id :other/by-id]))
+
+               ::gen-ident-value
+               (fn [_] gen/string-ascii)
+
+               ::gen-mutation-key
+               (fn [_] (gen/elements '[do-something create/this-thing operation.on/space])))]
+  (gen/sample ((::gen-query system) system)))
+=&gt;
+([]
+ [{:other []}]
+ []
+ []
+ []
+ [{:price [{[:user/by-id "!"] []} :title]} :id]
+ [:bar {[:other/by-id "@"] [:foo :other :name]}]
+ [:name :id]
+ [:price :title :id :name]
+ [:foo
+  ({:bar [[:user/by-id ""] :price {:id [:other]} :other]} {})
+  :other
+  :namespaced/value
+  {:name [:name
+          {:bar [:name
+                 :bar
+                 :namespaced/value
+                 ({[:user/by-id "AeA$;"] [:foo]}
+                  {:foo/param "_+y9ihY", :param "Y@p5Bd5B"})
+                 :id
+                 :namespaced/value
+                 :name]}]}
+  :id])</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you wanna see an even more advanced usage, you can check <a href="https://github.com/wilkerlucio/pathom/blob/master/src/com/wsscode/pathom/connect/gen.cljc">Pathom connect generator</a>, which
+uses the Pathom connect index to generate queries that are valid according to the user property graph.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_removing_specs_on_clojurescript"><a class="anchor" href="#_removing_specs_on_clojurescript"></a>Removing specs on Clojurescript</h3>
+<div class="paragraph">
+<p>If you are not using the specs provided by EQL you can free some build space by
+eliding then. To do that you need to set the Clojurescript compiler options with:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">{:closure-defines {edn-query-language.core.INCLUDE_SPECS false}}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ast_encodedecode"><a class="anchor" href="#_ast_encodedecode"></a>AST Encode/Decode</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To convert between query and AST, EQL provides the helper functions <code>eql/query&#8594;ast</code> and
+<code>eql/ast&#8594;query</code>. Here are some example usages:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(eql/query-&gt;ast [:foo])
+; =&gt; {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]}
+
+(eql/ast-&gt;query {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]})
+; =&gt; [:foo]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_api_docs"><a class="anchor" href="#_api_docs"></a>API Docs</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Check the complete API docs at <a href="https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core">EQL cljdoc page</a>.</p>
+</div>
+</div>
+</div>
+</article>
+</main>
+</div>
+<footer class="footer">
+  <div class="container">
+  </div>
+</footer>
+<script src="../../_/js/site.js"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>
