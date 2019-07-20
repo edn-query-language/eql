@@ -1,3 +1,4 @@
 * xref:what-is-eql.adoc[What is EQL?]
 * xref:specification.adoc[Specification]
 * xref:clojure-specs.adoc[Clojure Specs]
+* xref:library.adoc[Library]

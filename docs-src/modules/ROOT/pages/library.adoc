@@ -1,0 +1,194 @@
+= Library
+
+The package `edn-query-language.core` provides a suite of specs to validate queries and
+ASTs. It also provides generators for the query and helper functions to common
+query operations.
+
+== Clojure Specs
+
+The EQL library provides specs to validate and generate queries.
+
+=== Validation
+
+You can validate the query syntax using link:https://clojure.org/guides/spec[clojure.spec], here is an example:
+
+[source,clojure]
+----
+(s/valid? ::eql/query [:sample :query]) ; => true
+(s/valid? ::eql/query [#{:set}]) ; => false
+(s/valid? ::eql/query ['(call/op {})]) ; => true
+----
+
+NOTE: `s` is alias for `clojure.spec.alpha`
+
+You can use spec explain feature for more details:
+
+[source,clojure]
+----
+(s/explain ::eql/query [#{:set}])
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-expr at: [:mutation :mutation] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-join at: [:mutation :mutation-join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/property at: [:prop] predicate: keyword?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/join at: [:join] predicate: map?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/ident at: [:ident] predicate: vector?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/param-expr at: [:param-exp] predicate: seq?
+; In: [0] val: #{:set} fails spec: :edn-query-language.core/special-property at: [:special] predicate: #{(quote *)}
+----
+
+I suggest you check the link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L133-L196[sources for the specs] for more details on parts that compose
+it, they will stay consistent and can be used to validate parts of the transaction as well.
+
+=== Generation
+
+EQL also provides built-in generators, the main intended usage for it is to write generative
+tests for parser implementations.
+
+Basic example to generate random queries:
+
+[source,clojure]
+----
+(gen/sample (s/gen ::query) 10)
+=>
+([]
+ []
+ [(:?./*_ {}) :z/ZH]
+ []
+ [#:J{:w {:c/!V [#:YY{:u [:u1/X?!
+                          #:r94{:*+ [#:aG{:YA 2} :t!o/Ya1 :XL/HR #:!-Q{:b_ []}]}
+                          :OP/E]}
+                 :.qE/Nd-],
+          :j./!T [[:p/h*y :f?1]
+                  #:s*{:-W []}
+                  (NG_
+                   {[] #{}, [4] (0.5 :_ -3 -Ch), #{} #{}, #{-1 {##-Inf ?.1/e?A}} {}})],
+          :z/s+ []}}
+  :-_/_
+  :H/E
+  :Y/xD]
+ [:?7/w :iO/! (:r/!N {{-2.0 false} [], [] [], [:P7] [0 J1]})]
+ [:+Bi/-K :!8*/r0 :?/Cio]
+ [:*.-/R* :+BT/W :-l8/c :Ih/V [:RE/- "0>WwI`u"] :H/vT]
+ [:z+8/g]
+ [])
+----
+
+NOTE: `gen` is alias for `clojure.test.check.generators`
+
+Although fully random queries can be interesting to test some parser edge cases, in many
+situations you will may want to constraint how the query is generated, with this in mind
+EQL provides a way to enable this kind of customization. To get a sense of what you can
+customize link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L10-L121[you can take a look at the default implementation for each default generator],
+any of those keys can be tuned to constraint how the query is generated.
+
+To demonstrate how to use this, let's customize the generator to limit the properties it generates
+to a fixed set we pre defined:
+
+[source,clojure]
+----
+(gen/sample (eql/make-gen {::eql/gen-property ; <1>
+                       (fn [_] (gen/elements [:id :name :title :foo :bar]))}
+              ::eql/gen-query) ; <2>
+  10)
+=>
+([]
+ []
+ []
+ [[:X/q6 1] :name :title]
+ [({:title [(L {#{} [], () [], #{-5} ()})
+            (:name {{#{} {}} :., {} {}})
+            {:name [:bar :title]}]}
+   {[*+-] #{0.5625 #uuid"edf051fb-ab28-42d0-a941-152c4e87b060"},
+    #{#uuid"712e7415-5148-400b-99db-cfb79004700e" -1/2} (),
+    {} (:F/le9 #uuid"5ad52713-d13a-4888-bd92-2d1541c0387b" "" true)})
+  {(:foo
+    {[(2.0 false) z/NO] [I./j #uuid"eef64a1d-8055-4ae7-95be-06bdc4f9cefd"], {} [""]}) [:id
+                                                                                       ({:id [:name
+                                                                                              *]}
+                                                                                        {})]}]
+ [:id :id]
+ [{:foo [:name * [:mO/D MZ_/e0Z] :bar :foo]}]
+ []
+ [:bar]
+ [:foo])
+----
+
+<1> We send a map to `eql/make-gen` to override some of the generator settings, any non
+defined keys will fallback to default implementation
+<2> Select which generator to use, this is useful to generate only sub-parts if needed
+
+One more example changing many definitions:
+
+[source,clojure]
+----
+(let [system (assoc generators
+               ::gen-params
+               (fn [_] (gen/map (gen/elements [:param :foo/param]) gen/string-ascii))
+
+               ::gen-property
+               (fn [_] (gen/elements [:id :name :title :foo :bar :other :price :namespaced/value]))
+
+               ::gen-ident-key
+               (fn [_] (gen/elements [:user/by-id :other/by-id]))
+
+               ::gen-ident-value
+               (fn [_] gen/string-ascii)
+
+               ::gen-mutation-key
+               (fn [_] (gen/elements '[do-something create/this-thing operation.on/space])))]
+  (gen/sample ((::gen-query system) system)))
+=>
+([]
+ [{:other []}]
+ []
+ []
+ []
+ [{:price [{[:user/by-id "!"] []} :title]} :id]
+ [:bar {[:other/by-id "@"] [:foo :other :name]}]
+ [:name :id]
+ [:price :title :id :name]
+ [:foo
+  ({:bar [[:user/by-id ""] :price {:id [:other]} :other]} {})
+  :other
+  :namespaced/value
+  {:name [:name
+          {:bar [:name
+                 :bar
+                 :namespaced/value
+                 ({[:user/by-id "AeA$;"] [:foo]}
+                  {:foo/param "_+y9ihY", :param "Y@p5Bd5B"})
+                 :id
+                 :namespaced/value
+                 :name]}]}
+  :id])
+----
+
+If you wanna see an even more advanced usage, you can check link:https://github.com/wilkerlucio/pathom/blob/master/src/com/wsscode/pathom/connect/gen.cljc[Pathom connect generator], which
+uses the Pathom connect index to generate queries that are valid according to the user property graph.
+
+=== Removing specs on Clojurescript
+
+If you are not using the specs provided by EQL you can free some build space by
+eliding then. To do that you need to set the Clojurescript compiler options with:
+
+[source,clojure]
+----
+{:closure-defines {edn-query-language.core.INCLUDE_SPECS false}}
+----
+
+== AST Encode/Decode
+
+To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
+`eql/ast->query`. Here are some example usages:
+
+[source,clojure]
+----
+(eql/query->ast [:foo])
+; => {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]}
+
+(eql/ast->query {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]})
+; => [:foo]
+----
+
+== API Docs
+
+Check the complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core[EQL cljdoc page].
