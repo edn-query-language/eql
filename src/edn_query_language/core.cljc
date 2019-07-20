@@ -139,6 +139,7 @@
       (assert gen (str "No generator available for " name))
       ((get env name) env)))
 
+  ; tag::specs[]
   (s/def ::property keyword?)
   (s/def ::special-property #{'*})
   (s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
@@ -202,6 +203,7 @@
 
   (s/def ::query
     (s/coll-of ::query-expr :kind vector? :gen (default-gen ::gen-query)))
+  ; end::specs[]
 
   ;; ast specs
 

@@ -136,6 +136,9 @@ great for users and interfaces, but to transform is easier if you don't have to 
 with the syntax details/ambiguities. The EQL library provides functions to convert from and to
 AST from EQL.
 
+In the end of this section you will also find the Clojure Spec formal specification
+for the EQL syntax.
+
 === Query / Transactions
 
 An EQL transaction is represented by an EDN vector.
@@ -538,6 +541,13 @@ the syntax of a join with the syntax of a mutation:
    :children     [{:type :prop, :dispatch-key :response, :key :response}
                   {:type :prop, :dispatch-key :key-a, :key :key-a}
                   {:type :prop, :dispatch-key :key-b, :key :key-b}]}]}
+----
+
+=== Clojure Specs
+
+[source,clojure]
+----
+include::./src/edn_query_language/core.cljc[tag=specs]
 ----
 
 == Library
