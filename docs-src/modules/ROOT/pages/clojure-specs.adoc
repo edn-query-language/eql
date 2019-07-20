@@ -1,0 +1,70 @@
+= Clojure Specs
+
+Here you can find a formal definition for the query syntax, expressed as Clojure Specs.
+
+[source,clojure]
+----
+(s/def ::property keyword?)
+(s/def ::special-property #{'*})
+(s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
+(s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
+(s/def ::join-key (s/or :prop ::property, :ident ::ident, :param-exp ::join-key-param-expr))
+(s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
+(s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
+(s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
+(s/def ::recursion (s/or :depth ::recursion-depth, :unbounded #{'...}))
+
+(s/def ::join-query
+  (s/with-gen
+    (s/or :query ::query
+          :union ::union
+          :recursion ::recursion)
+    (default-gen ::gen-join-query)))
+
+(s/def ::params
+  (s/with-gen map? (default-gen ::gen-params)))
+
+(s/def ::param-expr-key
+  (s/with-gen
+    (s/or :prop ::property
+          :join ::join
+          :ident ::ident)
+    (default-gen ::gen-param-expr-key)))
+
+(s/def ::param-expr
+  (s/with-gen
+    (s/and seq? (s/cat :expr ::param-expr-key :params (s/? ::params)))
+    (default-gen ::gen-param-expr)))
+
+(s/def ::join-key-param-key (s/or :prop ::property :ident ::ident))
+
+(s/def ::join-key-param-expr
+  (s/with-gen
+    (s/and seq? (s/cat :expr ::join-key-param-key :params (s/? ::params)))
+    (default-gen ::gen-join-key-param-expr)))
+
+(s/def ::mutation-key (s/with-gen symbol? (default-gen ::gen-mutation-key)))
+
+(s/def ::mutation-expr
+  (s/with-gen
+    (s/and seq? (s/cat :mutate-key ::mutation-key :params (s/? ::params)))
+    (default-gen ::gen-mutation-expr)))
+
+(s/def ::mutation-join
+  (s/map-of ::mutation-expr ::query :count 1 :conform-keys true))
+
+(s/def ::mutation
+  (s/or :mutation ::mutation-expr
+        :mutation-join ::mutation-join))
+
+(s/def ::query-expr
+  (s/or :prop ::property
+        :join ::join
+        :ident ::ident
+        :mutation ::mutation
+        :param-exp ::param-expr
+        :special ::special-property))
+
+(s/def ::query
+  (s/coll-of ::query-expr :kind vector? :gen (default-gen ::gen-query)))
+----

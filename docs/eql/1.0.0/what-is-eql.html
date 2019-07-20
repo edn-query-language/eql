@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>What is EQL? | EDN Query Language</title>
+    <link rel="canonical" href="http://edn-query-language.org/eql/1.0.0/what-is-eql.html">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="schema.dcterms" href="https://purl.org/dc/terms/">
+    <meta name="dcterms.subject" content="eql">
+    <meta name="dcterms.identifier" content="1.0.0">
+    <meta name="generator" content="Antora 2.0.0">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar" id="topbar">
+    <div class="container">
+      <div id="topbar-menu" class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="http://edn-query-language.org">EDN Query Language</a>
+
+          <a class="navbar-item component" href="what-is-eql.html"><span class="title">EQL</span> <span class="version">1.0.0</span></a>
+        </div>
+        <div class="navbar-end">
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body container">
+<nav class="nav">
+<div class="nav-menu">
+<ul class="nav-list">
+  <li class="nav-item is-active" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item is-current-page is-active" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="what-is-eql.html">What is EQL?</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="specification.html">Specification</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="clojure-specs.html">Clojure Specs</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="library.html">Library</a>
+    </span>
+  </li>
+</ul>
+  </li>
+</ul>
+</div>
+</nav>
+<aside class="toc sidebar">
+  <div class="toc-menu"></div>
+</aside>
+<main class="article" data-ceiling="topbar">
+  <div class="article-header">
+<button class="nav-control"></button>
+<nav class="crumbs" aria-label="breadcrumbs">
+  <ul>
+    <li class="crumb"><a href="what-is-eql.html">EQL</a></li>
+    <li class="crumb"><a href="what-is-eql.html">What is EQL?</a></li>
+  </ul>
+</nav>
+<div class="tools" role="navigation">
+  <ul>
+    <li class="tool edit"><a href="file:///Users/wilker.lucio/Development/eql/docs-src/modules/ROOT/pages/what-is-eql.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
+  </ul>
+</div>
+  </div>
+<article class="doc">
+<h1 class="page">What is EQL?</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>EQL is a declarative way to make hierarchical (and possibly nested) selections of information about data requirements.</p>
+</div>
+<div class="paragraph">
+<p>EQL doesn&#8217;t have its own language; it uses EDN to express the request, taking advantage of
+the rich set of primitives provided by it.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_eql_for_selections"><a class="anchor" href="#_eql_for_selections"></a>EQL for selections</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>An easy way to get started is to think of a map and try to describe its shape. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">{:album/name "Magical Mystery Tour"
+ :album/year 1967}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By describing the shape, we mean describing the structure but without the values, the previous example can be described using EQL as:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[:album/name :album/year]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Like using <code>select-keys</code> to specify which fields to extract from a map. Now let&#8217;s see
+what it looks like for nested structures:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">{:album/name   "Magical Mystery Tour"
+ :album/artist {:artist/name "The Beatles"}}
+
+; can be described as:
+
+[:album/name
+ ; note the use of a map to express nesting
+ {:album/artist
+  [:artist/name]}]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It works the same to represent nested sequences:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">{:album/name   "Magical Mystery Tour"
+ :album/tracks [{:track/name "The Fool On The Hill"}
+                {:track/name "All You Need Is Love"}]}
+
+; can be described as:
+
+[:album/name
+ {:album/tracks
+  [:track/name]}]</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Although with just EQL you can&#8217;t know if a key value is expected to be a single item or a sequence, you
+can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
+and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
+if the response of a key is a single item or a sequence.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_eql_for_operations"><a class="anchor" href="#_eql_for_operations"></a>EQL for operations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>EQL also supports <code>mutations</code>, which are like side effect calls to an API. Mutations can
+appear on EQL transaction, and they look like Clojure function calls, example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[(call-mutation {:data "value"})]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>More details in <a href="#Mutations">[Mutations]</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_datomic_pull_syntax_comparison"><a class="anchor" href="#_datomic_pull_syntax_comparison"></a>Datomic Pull Syntax comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>On top of the <a href="https://docs.datomic.com/on-prem/pull.html">Datomic Pull Syntax</a> expression, EQL also supports:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="specification.html#_parameters" class="page">Parameters</a></p>
+</li>
+<li>
+<p><a href="specification.html#_mutations" class="page">Mutations</a></p>
+</li>
+<li>
+<p><a href="specification.html#_unions" class="page">Union Queries</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Check the links on each for more details.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="https://docs.datomic.com/on-prem/pull.html#attribute-with-options">attribute with options</a> feature
+from the Datomic Pull Syntax is not present in EQL; instead, we provide the parameterized
+attributes that can handle arbitrary data to go along the base property.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_graphql_comparison"><a class="anchor" href="#_graphql_comparison"></a>GraphQL comparison</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Similar to GraphQL, EQL works as a language to client libraries to communicate data requirements and operations,
+there is a good set of intersection in features between both, as:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>a language to describe arbitrarily nested structures</p>
+</li>
+<li>
+<p>support for mutations (operations to side effect the world)</p>
+</li>
+<li>
+<p>support for parametrization</p>
+</li>
+<li>
+<p>union queries for query branching (select query according to some custom definition based on the data)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>GraphQL has a type system in its definition, and it is required for a GraphQL system to work. EQL has
+no such thing, and it dictates only the syntax but not the semantics. Some features in
+GraphQL just doesn&#8217;t make sense in EQL, like fragments, since EQL is already a data format (EDN),
+it&#8217;s easy to compose data as you would do in a regular Clojure program, for that reason
+many features are not necessary because EQL is a parseable data format with all the Clojure
+tools already available to operate on top of it. Also read the <a href="library.html#_ast_encodedecode" class="page">AST Encode/Decode</a>
+section for more information on how to programmatically manipulate EQL data structures.</p>
+</div>
+</div>
+</div>
+</article>
+</main>
+</div>
+<footer class="footer">
+  <div class="container">
+  </div>
+</footer>
+<script src="../../_/js/site.js"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

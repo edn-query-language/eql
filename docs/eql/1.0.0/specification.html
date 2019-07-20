@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Specification | EDN Query Language</title>
+    <link rel="canonical" href="http://edn-query-language.org/eql/1.0.0/specification.html">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="schema.dcterms" href="https://purl.org/dc/terms/">
+    <meta name="dcterms.subject" content="eql">
+    <meta name="dcterms.identifier" content="1.0.0">
+    <meta name="generator" content="Antora 2.0.0">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar" id="topbar">
+    <div class="container">
+      <div id="topbar-menu" class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="http://edn-query-language.org">EDN Query Language</a>
+
+          <a class="navbar-item component" href="what-is-eql.html"><span class="title">EQL</span> <span class="version">1.0.0</span></a>
+        </div>
+        <div class="navbar-end">
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body container">
+<nav class="nav">
+<div class="nav-menu">
+<ul class="nav-list">
+  <li class="nav-item is-active" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="what-is-eql.html">What is EQL?</a>
+    </span>
+  </li>
+  <li class="nav-item is-current-page is-active" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="specification.html">Specification</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="clojure-specs.html">Clojure Specs</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="library.html">Library</a>
+    </span>
+  </li>
+</ul>
+  </li>
+</ul>
+</div>
+</nav>
+<aside class="toc sidebar">
+  <div class="toc-menu"></div>
+</aside>
+<main class="article" data-ceiling="topbar">
+  <div class="article-header">
+<button class="nav-control"></button>
+<nav class="crumbs" aria-label="breadcrumbs">
+  <ul>
+    <li class="crumb"><a href="what-is-eql.html">EQL</a></li>
+    <li class="crumb"><a href="specification.html">Specification</a></li>
+  </ul>
+</nav>
+<div class="tools" role="navigation">
+  <ul>
+    <li class="tool edit"><a href="file:///Users/wilker.lucio/Development/eql/docs-src/modules/ROOT/pages/specification.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
+  </ul>
+</div>
+  </div>
+<article class="doc">
+<h1 class="page">Specification</h1>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following sections explain the features provided by the EQL syntax and the
+common usages of it. Along with code examples from the transactions, after that, we
+are going to provide the AST data that&#8217;s equivalent to the transaction, the AST is the
+recommended format to transform EQL transactions programmatically. The EQL format is
+great for users and interfaces, but to transform is easier if you don&#8217;t have to deal
+with the syntax details/ambiguities. The EQL library provides functions to convert from and to
+AST from EQL.</p>
+</div>
+<div class="paragraph">
+<p>In the end of this section you will also find the Clojure Spec formal specification
+for the EQL syntax.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_query_transactions"><a class="anchor" href="#_query_transactions"></a>Query / Transactions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>An EQL transaction is represented by an EDN vector.</p>
+</div>
+<div class="paragraph">
+<p>Examples:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[] ; empty transaction
+
+; ast
+
+{:type :root, :children []}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A transaction that only contains reads is commonly called a <code>query</code>, but notice that
+at the syntax level, it has no difference.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_properties"><a class="anchor" href="#_properties"></a>Properties</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Properties in <code>EQL</code> are expressed as Clojure keywords; they can be simple or qualified
+keywords, and they express the property been requested.</p>
+</div>
+<div class="paragraph">
+<p>Examples:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[:album/name :album/year]
+
+; ast
+
+{:type     :root
+ :children [{:type :prop, :dispatch-key :album/name, :key :album/name}
+            {:type :prop, :dispatch-key :album/year, :key :album/year}]}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_joins"><a class="anchor" href="#_joins"></a>Joins</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Joins are used to describe nesting in the request transaction. They are represented as
+EDN maps, always with a single entry, the entry key is the property to join on, and the
+entry value is a sub-query to run.</p>
+</div>
+<div class="paragraph">
+<p>Examples:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[{:favorite-albums
+  [:album/name :album/year]}]
+
+; ast
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :favorite-albums
+             :key          :favorite-albums
+             :query        [:album/name :album/year]
+             :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                            {:type :prop, :dispatch-key :album/year, :key :album/year}]}]}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Nested joins example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[{:favorite-albums
+  [:album/name :album/year
+   {:album/tracks
+    [:track/name
+     :track/duration]}]}]
+
+; ast
+
+{:type :root
+ :children
+ [{:type         :join
+   :dispatch-key :favorite-albums
+   :key          :favorite-albums
+
+   :query        [:album/name
+                  :album/year
+                  {:album/tracks [:track/name :track/duration]}]
+
+   :children     [{:type :prop, :dispatch-key :album/name, :key :album/name}
+                  {:type :prop, :dispatch-key :album/year, :key :album/year}
+                  {:type         :join
+                   :dispatch-key :album/tracks
+                   :key          :album/tracks
+                   :query        [:track/name :track/duration]
+                   :children     [{:type :prop, :dispatch-key :track/name, :key :track/name}
+                                  {:type         :prop
+                                   :dispatch-key :track/duration
+                                   :key          :track/duration}]}]}]}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_idents"><a class="anchor" href="#_idents"></a>Idents</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Idents are represented by a vector with two elements, where the first is a keyword and
+the second can be anything. They are like <a href="http://blog.datomic.com/2014/02/datomic-lookup-refs.html">lookup refs on Datomic</a>,
+in general, they can provide an address-like thing, and their use and semantic might
+vary from system to system.</p>
+</div>
+<div class="paragraph">
+<p>Examples:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[[:customer/id 123]]
+
+; ast
+
+{:type :root
+ :children [{:type :prop, :dispatch-key :customer/id, :key [:customer/id 123]}]}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that this time in the AST the <code>:dispatch-key</code> and <code>:key</code> got different values this
+time, the <code>:dispatch-key</code> been just the <code>ident key</code> while the <code>:key</code> contains the
+full thing.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s common to use an ident as a join key to start a query for some entity:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[{[:customer/id 123]
+  [:customer/name :customer/email]}]
+
+; ast
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :customer/id
+             :key          [:customer/id 123]
+             :query        [:customer/name :customer/email]
+             :children     [{:type :prop, :dispatch-key :customer/name, :key :customer/name}
+                            {:type         :prop
+                             :dispatch-key :customer/email
+                             :key          :customer/email}]}]}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parameters"><a class="anchor" href="#_parameters"></a>Parameters</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>EQL properties, joins, and idents have support for parametrization. This allows the
+query to provide an extra dimension of information about the requested data. A parameter
+is expressed by wrapping the thing with an EDN list, like so:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">; without params
+[:foo]
+
+; with params
+[(:foo {:with "params"})]
+
+; ast
+
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :foo
+             :key          :foo
+             :params       {:with "params"}
+             :meta         {:line 1, :column 15}}]}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note on the AST side it gets a new <code>:params</code> key. Params <strong>must</strong> always be maps, the
+map values can be anything. Here are more examples of parameterizing queries:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">; ident with params
+
+[([:ident "value"] {:with "param"})]
+
+{:type     :root
+ :children [{:type         :prop
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "param"}
+             :meta         {:line 1, :column 15}}]}
+
+; join with params wrap the key with the list
+
+[{(:join-key {:with "params"})
+  [:sub-query]}]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
+
+; ident join with params
+
+[{([:ident "value"] {:with "params"})
+  [:sub-query]}]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :ident
+             :key          [:ident "value"]
+             :params       {:with "params"}
+             :meta         {:line 1 :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}
+
+; alternate syntax to add params on joins (wrap the entire map, AST result is the same)
+
+[({:join-key
+   [:sub-query]}
+  {:with "params"})]
+
+{:type     :root
+ :children [{:type         :join
+             :dispatch-key :join-key
+             :key          :join-key
+             :params       {:with "params"}
+             :meta         {:line 1, :column 16}
+             :query        [:sub-query]
+             :children     [{:type         :prop
+                             :dispatch-key :sub-query
+                             :key          :sub-query}]}]}</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+You&#8217;ll need to use quote and unquote in CLJ files for calls, otherwise the lists will be evaluated as Clojure calls. Quote is not necessary in EDN files.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_query_meta"><a class="anchor" href="#_query_meta"></a>Query Meta</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Metadata can be stored on a query. The AST will encode the metadata so that transformations to/from an AST can preserve it.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(with-meta [] {:meta "data"})
+
+; ast
+
+{:type :root, :children [], :meta {:meta "data"}}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_unions"><a class="anchor" href="#_unions"></a>Unions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In EQL unions are used to specify polymorphic requirements, that means depending on some
+condition a different query might be chosen to fulfill the requirements. For example,
+a messaging app may have a single list, and each entry on the chat log can be a <code>message</code>,
+<code>audio</code> or <code>photo</code>, each having its own query requirement. Here it is in code:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">; message query
+[:message/id :message/text :chat.entry/timestamp]
+
+; audio query
+[:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+
+; photo query
+[:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]
+
+; list query
+[{:chat/entries ???}] ; what goes there?</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now to express this polymorphic requirement as the sub-query of the <code>:chat/entries</code> list
+we can use a map as the join value, and each entry on this map represents a possible
+sub-query. The way this information is used is up to the parser implementation; EQL only
+defines the syntax. Here are some examples of how it could be written:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">; in this example, the selection is made by looking if the processed entry contains
+; some value on the key used for its selection
+[{:chat/entries
+  {:message/id [:message/id :message/text :chat.entry/timestamp]
+   :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :photo/id   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; in this case, we give a type name and use as the key, this usually requires some
+; out of band configuration to know how to pull this data from each entry to use
+; as the comparison
+[{:chat/entries
+  {:entry.type/message [:message/id :message/text :chat.entry/timestamp]
+   :entry.type/audio   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+   :entry.type/photo   [:photo/id :photo/url :photo/width :photo/height :chat.entry/timestamp]}}]
+
+; ast for the first example
+
+{:type :root
+ :children
+ [{:type         :join
+   :dispatch-key :chat/entries
+   :key          :chat/entries
+   :query        {:message/id [:message/id :message/text :chat.entry/timestamp]
+                  :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                  :photo/id   [:photo/id
+                               :photo/url
+                               :photo/width
+                               :photo/height
+                               :chat.entry/timestamp]}
+   :children     [{:type :union
+                   :query
+                         {:message/id [:message/id :message/text :chat.entry/timestamp]
+                          :audio/id   [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                          :photo/id   [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]}
+                   :children
+                         [{:type      :union-entry
+                           :union-key :message/id
+                           :query     [:message/id :message/text :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :message/id, :key :message/id}
+                                       {:type :prop, :dispatch-key :message/text, :key :message/text}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :audio/id
+                           :query     [:audio/id :audio/url :audio/duration :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :audio/id, :key :audio/id}
+                                       {:type :prop, :dispatch-key :audio/url, :key :audio/url}
+                                       {:type         :prop
+                                        :dispatch-key :audio/duration
+                                        :key          :audio/duration}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}
+                          {:type      :union-entry
+                           :union-key :photo/id
+                           :query     [:photo/id
+                                       :photo/url
+                                       :photo/width
+                                       :photo/height
+                                       :chat.entry/timestamp]
+                           :children  [{:type :prop, :dispatch-key :photo/id, :key :photo/id}
+                                       {:type :prop, :dispatch-key :photo/url, :key :photo/url}
+                                       {:type :prop, :dispatch-key :photo/width, :key :photo/width}
+                                       {:type :prop, :dispatch-key :photo/height, :key :photo/height}
+                                       {:type         :prop
+                                        :dispatch-key :chat.entry/timestamp
+                                        :key          :chat.entry/timestamp}]}]}]}]}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_mutations"><a class="anchor" href="#_mutations"></a>Mutations</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Mutations in EQL are used to represent operation calls, usually to do something that will
+cause a side effect. Mutations as data allows that operation to behave much like event
+sourcing, and can be transparently applied locally, across a network, onto an event bus, etc.</p>
+</div>
+<div class="paragraph">
+<p>A mutation is represented by a list of two elements; the first is the symbol
+that names the mutation, and the second is a map with input data.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[(call.some/operation {:data "input"})]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 610, :column 17}
+   :type         :call}]}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Mutations and parameters are very similar, their main difference
+is that once uses symbols as keys, and the other uses one of the read options (properties,
+idents, joins).
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The EQL notation does not technically limit the combination of expressions that contain
+both query and mutation elements; however, implementations of EQL processing may choose
+to make restrictions on these combinations in order to enforce particular semantics.</p>
+</div>
+<div class="sect2">
+<h3 id="_mutation_joins"><a class="anchor" href="#_mutation_joins"></a>Mutation Joins</h3>
+<div class="paragraph">
+<p>A mutation may have a return value, and that return value can be a graph; therefore, it
+makes sense that EQL support the ability to describe what portion of the available returned
+graph should be returned. The support for mutation graph return values is done by combining
+the syntax of a join with the syntax of a mutation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">[{(call.some/operation {:data "input"})
+  [:response :key-a :key-b]}]
+
+; ast
+
+{:type :root
+ :children
+ [{:dispatch-key call.some/operation
+   :key          call.some/operation
+   :params       {:data "input"}
+   :meta         {:line 612 :column 18}
+   :type         :call
+   :query        [:response :key-a :key-b]
+   :children     [{:type :prop, :dispatch-key :response, :key :response}
+                  {:type :prop, :dispatch-key :key-a, :key :key-a}
+                  {:type :prop, :dispatch-key :key-b, :key :key-b}]}]}</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</main>
+</div>
+<footer class="footer">
+  <div class="container">
+  </div>
+</footer>
+<script src="../../_/js/site.js"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>

@@ -1,132 +1,4 @@
-:source-highlighter: coderay
-:source-language: clojure
-:toc:
-:toc-placement: preamble
-:sectlinks:
-:sectanchors:
-:sectnums:
-ifdef::env-github,env-cljdoc[]
-:tip-caption: :bulb:
-:note-caption: :information_source:
-:important-caption: :heavy_exclamation_mark:
-:caution-caption: :fire:
-:warning-caption: :warning:
-endif::[]
-
-= EQL
-
-image:https://img.shields.io/clojars/v/edn-query-language/eql.svg[link=https://clojars.org/edn-query-language/eql]
-image:https://cljdoc.xyz/badge/edn-query-language/eql[link=https://cljdoc.xyz/d/edn-query-language/eql/CURRENT]
-image:https://circleci.com/gh/edn-query-language/eql/tree/master.svg?style=svg["CircleCI", link="https://circleci.com/gh/edn-query-language/eql/tree/master"]
-
-This repository contains a specification for EQL and a support library to help the development
-of tools using it.
-
-== What is EQL?
-
-EQL is a declarative way to make hierarchical (and possibly nested) selections of information about data requirements.
-
-EQL doesn't have its own language; it uses EDN to express the request, taking advantage of
-the rich set of primitives provided by it.
-
-==== EQL for selections
-
-An easy way to get started is to think of a map and try to describe its shape. For example:
-
-[source,clojure]
-----
-{:album/name "Magical Mystery Tour"
- :album/year 1967}
-----
-
-By describing the shape, we mean describing the structure but without the values, the previous example can be described using EQL as:
-
-[source,clojure]
-----
-[:album/name :album/year]
-----
-
-Like using `select-keys` to specify which fields to extract from a map. Now let's see
-what it looks like for nested structures:
-
-[source,clojure]
-----
-{:album/name   "Magical Mystery Tour"
- :album/artist {:artist/name "The Beatles"}}
-
-; can be described as:
-
-[:album/name
- ; note the use of a map to express nesting
- {:album/artist
-  [:artist/name]}]
-----
-
-It works the same to represent nested sequences:
-
-[source,clojure]
-----
-{:album/name   "Magical Mystery Tour"
- :album/tracks [{:track/name "The Fool On The Hill"}
-                {:track/name "All You Need Is Love"}]}
-
-; can be described as:
-
-[:album/name
- {:album/tracks
-  [:track/name]}]
-----
-
-TIP: Although with just EQL you can't know if a key value is expected to be a single item or a sequence, you
-can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
-and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
-if the response of a key is a single item or a sequence.
-
-==== EQL for operations
-
-EQL also supports `mutations`, which are like side effect calls to an API. Mutations can
-appear on EQL transaction, and they look like Clojure function calls, example:
-
-[source,clojure]
-----
-[(call-mutation {:data "value"})]
-----
-
-More details in <<Mutations>>.
-
-=== Datomic Pull Syntax comparison
-
-On top of the link:https://docs.datomic.com/on-prem/pull.html[Datomic Pull Syntax] expression, EQL also supports:
-
-- <<Parameters>>
-- <<Mutations>>
-- <<Unions,Union Queries>>
-
-Check the links on each for more details.
-
-The link:https://docs.datomic.com/on-prem/pull.html#attribute-with-options[attribute with options] feature
-from the Datomic Pull Syntax is not present in EQL; instead, we provide the parameterized
-attributes that can handle arbitrary data to go along the base property.
-
-=== GraphQL comparison
-
-Similar to GraphQL, EQL works as a language to client libraries to communicate data requirements and operations,
-there is a good set of intersection in features between both, as:
-
-- a language to describe arbitrarily nested structures
-- support for mutations (operations to side effect the world)
-- support for parametrization
-- union queries for query branching (select query according to some custom definition based on the data)
-
-GraphQL has a type system in its definition, and it is required for a GraphQL system to work. EQL has
-no such thing, and it dictates only the syntax but not the semantics. Some features in
-GraphQL just doesn't make sense in EQL, like fragments, since EQL is already a data format (EDN),
-it's easy to compose data as you would do in a regular Clojure program, for that reason
-many features are not necessary because EQL is a parseable data format with all the Clojure
-tools already available to operate on top of it. Also read the <<AST Encode/Decode,AST>> section for more information
-on how to programmatically manipulate EQL data structures.
-
-== Specification
+= Specification
 
 The following sections explain the features provided by the EQL syntax and the
 common usages of it. Along with code examples from the transactions, after that, we
@@ -139,7 +11,7 @@ AST from EQL.
 In the end of this section you will also find the Clojure Spec formal specification
 for the EQL syntax.
 
-=== Query / Transactions
+== Query / Transactions
 
 An EQL transaction is represented by an EDN vector.
 
@@ -157,7 +29,7 @@ Examples:
 A transaction that only contains reads is commonly called a `query`, but notice that
 at the syntax level, it has no difference.
 
-=== Properties
+== Properties
 
 Properties in `EQL` are expressed as Clojure keywords; they can be simple or qualified
 keywords, and they express the property been requested.
@@ -175,7 +47,7 @@ Examples:
             {:type :prop, :dispatch-key :album/year, :key :album/year}]}
 ----
 
-=== Joins
+== Joins
 
 Joins are used to describe nesting in the request transaction. They are represented as
 EDN maps, always with a single entry, the entry key is the property to join on, and the
@@ -233,7 +105,7 @@ Nested joins example:
                                    :key          :track/duration}]}]}]}
 ----
 
-=== Idents
+== Idents
 
 Idents are represented by a vector with two elements, where the first is a keyword and
 the second can be anything. They are like link:http://blog.datomic.com/2014/02/datomic-lookup-refs.html[lookup refs on Datomic],
@@ -276,7 +148,7 @@ It's common to use an ident as a join key to start a query for some entity:
                              :key          :customer/email}]}]}
 ----
 
-=== Parameters
+== Parameters
 
 EQL properties, joins, and idents have support for parametrization. This allows the
 query to provide an extra dimension of information about the requested data. A parameter
@@ -368,7 +240,7 @@ map values can be anything. Here are more examples of parameterizing queries:
 
 WARNING: You'll need to use quote and unquote in CLJ files for calls, otherwise the lists will be evaluated as Clojure calls. Quote is not necessary in EDN files.
 
-=== Query Meta
+== Query Meta
 
 Metadata can be stored on a query. The AST will encode the metadata so that transformations to/from an AST can preserve it.
 
@@ -381,7 +253,7 @@ Metadata can be stored on a query. The AST will encode the metadata so that tran
 {:type :root, :children [], :meta {:meta "data"}}
 ----
 
-=== Unions
+== Unions
 
 In EQL unions are used to specify polymorphic requirements, that means depending on some
 condition a different query might be chosen to fulfill the requirements. For example,
@@ -484,7 +356,7 @@ defines the syntax. Here are some examples of how it could be written:
                                         :key          :chat.entry/timestamp}]}]}]}]}
 ----
 
-=== Mutations
+== Mutations
 
 Mutations in EQL are used to represent operation calls, usually to do something that will
 cause a side effect. Mutations as data allows that operation to behave much like event
@@ -516,7 +388,7 @@ The EQL notation does not technically limit the combination of expressions that 
 both query and mutation elements; however, implementations of EQL processing may choose
 to make restrictions on these combinations in order to enforce particular semantics.
 
-==== Mutation Joins
+=== Mutation Joins
 
 A mutation may have a return value, and that return value can be a graph; therefore, it
 makes sense that EQL support the ability to describe what portion of the available returned
@@ -542,209 +414,3 @@ the syntax of a join with the syntax of a mutation:
                   {:type :prop, :dispatch-key :key-a, :key :key-a}
                   {:type :prop, :dispatch-key :key-b, :key :key-b}]}]}
 ----
-
-== Library
-
-The package `edn-query-language.core` provides a suite of specs to validate queries and
-ASTs. It also provides generators for the query and helper functions to common
-query operations.
-
-=== Clojure Specs
-
-The EQL library provides specs to validate and generate queries.
-
-==== Validation
-
-You can validate the query syntax using link:https://clojure.org/guides/spec[clojure.spec], here is an example:
-
-[source,clojure]
-----
-(s/valid? ::eql/query [:sample :query]) ; => true
-(s/valid? ::eql/query [#{:set}]) ; => false
-(s/valid? ::eql/query ['(call/op {})]) ; => true
-----
-
-NOTE: `s` is alias for `clojure.spec.alpha`
-
-You can use spec explain feature for more details:
-
-[source,clojure]
-----
-(s/explain ::eql/query [#{:set}])
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-expr at: [:mutation :mutation] predicate: seq?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/mutation-join at: [:mutation :mutation-join] predicate: map?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/property at: [:prop] predicate: keyword?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/join at: [:join] predicate: map?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/ident at: [:ident] predicate: vector?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/param-expr at: [:param-exp] predicate: seq?
-; In: [0] val: #{:set} fails spec: :edn-query-language.core/special-property at: [:special] predicate: #{(quote *)}
-----
-
-I suggest you check the link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L133-L196[sources for the specs] for more details on parts that compose
-it, they will stay consistent and can be used to validate parts of the transaction as well.
-
-==== Generation
-
-EQL also provides built-in generators, the main intended usage for it is to write generative
-tests for parser implementations.
-
-Basic example to generate random queries:
-
-[source,clojure]
-----
-(gen/sample (s/gen ::query) 10)
-=>
-([]
- []
- [(:?./*_ {}) :z/ZH]
- []
- [#:J{:w {:c/!V [#:YY{:u [:u1/X?!
-                          #:r94{:*+ [#:aG{:YA 2} :t!o/Ya1 :XL/HR #:!-Q{:b_ []}]}
-                          :OP/E]}
-                 :.qE/Nd-],
-          :j./!T [[:p/h*y :f?1]
-                  #:s*{:-W []}
-                  (NG_
-                   {[] #{}, [4] (0.5 :_ -3 -Ch), #{} #{}, #{-1 {##-Inf ?.1/e?A}} {}})],
-          :z/s+ []}}
-  :-_/_
-  :H/E
-  :Y/xD]
- [:?7/w :iO/! (:r/!N {{-2.0 false} [], [] [], [:P7] [0 J1]})]
- [:+Bi/-K :!8*/r0 :?/Cio]
- [:*.-/R* :+BT/W :-l8/c :Ih/V [:RE/- "0>WwI`u"] :H/vT]
- [:z+8/g]
- [])
-----
-
-NOTE: `gen` is alias for `clojure.test.check.generators`
-
-Although fully random queries can be interesting to test some parser edge cases, in many
-situations you will may want to constraint how the query is generated, with this in mind
-EQL provides a way to enable this kind of customization. To get a sense of what you can
-customize link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L10-L121[you can take a look at the default implementation for each default generator],
-any of those keys can be tuned to constraint how the query is generated.
-
-To demonstrate how to use this, let's customize the generator to limit the properties it generates
-to a fixed set we pre defined:
-
-[source,clojure]
-----
-(gen/sample (eql/make-gen {::eql/gen-property ; <1>
-                       (fn [_] (gen/elements [:id :name :title :foo :bar]))}
-              ::eql/gen-query) ; <2>
-  10)
-=>
-([]
- []
- []
- [[:X/q6 1] :name :title]
- [({:title [(L {#{} [], () [], #{-5} ()})
-            (:name {{#{} {}} :., {} {}})
-            {:name [:bar :title]}]}
-   {[*+-] #{0.5625 #uuid"edf051fb-ab28-42d0-a941-152c4e87b060"},
-    #{#uuid"712e7415-5148-400b-99db-cfb79004700e" -1/2} (),
-    {} (:F/le9 #uuid"5ad52713-d13a-4888-bd92-2d1541c0387b" "" true)})
-  {(:foo
-    {[(2.0 false) z/NO] [I./j #uuid"eef64a1d-8055-4ae7-95be-06bdc4f9cefd"], {} [""]}) [:id
-                                                                                       ({:id [:name
-                                                                                              *]}
-                                                                                        {})]}]
- [:id :id]
- [{:foo [:name * [:mO/D MZ_/e0Z] :bar :foo]}]
- []
- [:bar]
- [:foo])
-----
-
-<1> We send a map to `eql/make-gen` to override some of the generator settings, any non
-defined keys will fallback to default implementation
-<2> Select which generator to use, this is useful to generate only sub-parts if needed
-
-One more example changing many definitions:
-
-[source,clojure]
-----
-(let [system (assoc generators
-               ::gen-params
-               (fn [_] (gen/map (gen/elements [:param :foo/param]) gen/string-ascii))
-
-               ::gen-property
-               (fn [_] (gen/elements [:id :name :title :foo :bar :other :price :namespaced/value]))
-
-               ::gen-ident-key
-               (fn [_] (gen/elements [:user/by-id :other/by-id]))
-
-               ::gen-ident-value
-               (fn [_] gen/string-ascii)
-
-               ::gen-mutation-key
-               (fn [_] (gen/elements '[do-something create/this-thing operation.on/space])))]
-  (gen/sample ((::gen-query system) system)))
-=>
-([]
- [{:other []}]
- []
- []
- []
- [{:price [{[:user/by-id "!"] []} :title]} :id]
- [:bar {[:other/by-id "@"] [:foo :other :name]}]
- [:name :id]
- [:price :title :id :name]
- [:foo
-  ({:bar [[:user/by-id ""] :price {:id [:other]} :other]} {})
-  :other
-  :namespaced/value
-  {:name [:name
-          {:bar [:name
-                 :bar
-                 :namespaced/value
-                 ({[:user/by-id "AeA$;"] [:foo]}
-                  {:foo/param "_+y9ihY", :param "Y@p5Bd5B"})
-                 :id
-                 :namespaced/value
-                 :name]}]}
-  :id])
-----
-
-If you wanna see an even more advanced usage, you can check link:https://github.com/wilkerlucio/pathom/blob/master/src/com/wsscode/pathom/connect/gen.cljc[Pathom connect generator], which
-uses the Pathom connect index to generate queries that are valid according to the user property graph.
-
-==== Removing specs on Clojurescript
-
-If you are not using the specs provided by EQL you can free some build space by
-eliding then. To do that you need to set the Clojurescript compiler options with:
-
-[source,clojure]
-----
-{:closure-defines {edn-query-language.core.INCLUDE_SPECS false}}
-----
-
-=== AST Encode/Decode
-
-To convert between query and AST, EQL provides the helper functions `eql/query->ast` and
-`eql/ast->query`. Here are some example usages:
-
-[source,clojure]
-----
-(eql/query->ast [:foo])
-; => {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]}
-
-(eql/ast->query {:type :root, :children [{:type :prop, :dispatch-key :foo, :key :foo}]})
-; => [:foo]
-----
-
-=== API Docs
-
-Check the complete API docs at link:https://cljdoc.org/d/edn-query-language/eql/CURRENT/api/edn-query-language.core[EQL cljdoc page].
-
-//== History
-//
-//EQL is a derived language, it's initial syntax was defined by link:https://docs.datomic.com/pull.html[Datomic Pull Syntax], later extended
-//by link:https://github.com/omcljs/om[Om.next].
-
-//== Projects using EQL
-//
-//- link:http://fulcro.fulcrologic.com/[Fulcro]
-//- link:https://github.com/wilkerlucio/pathom[Pathom]
-//- link:https://github.com/walkable-server/walkable[Walkable]

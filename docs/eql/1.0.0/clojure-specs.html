@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Clojure Specs | EDN Query Language</title>
+    <link rel="canonical" href="http://edn-query-language.org/eql/1.0.0/clojure-specs.html">
+    <link rel="stylesheet" href="../../_/css/site.css">
+    <link rel="schema.dcterms" href="https://purl.org/dc/terms/">
+    <meta name="dcterms.subject" content="eql">
+    <meta name="dcterms.identifier" content="1.0.0">
+    <meta name="generator" content="Antora 2.0.0">
+  </head>
+  <body class="article">
+<header class="header">
+  <nav class="navbar" id="topbar">
+    <div class="container">
+      <div id="topbar-menu" class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" href="http://edn-query-language.org">EDN Query Language</a>
+
+          <a class="navbar-item component" href="what-is-eql.html"><span class="title">EQL</span> <span class="version">1.0.0</span></a>
+        </div>
+        <div class="navbar-end">
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+<div class="body container">
+<nav class="nav">
+<div class="nav-menu">
+<ul class="nav-list">
+  <li class="nav-item is-active" data-depth="0">
+<ul class="nav-list">
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="what-is-eql.html">What is EQL?</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="specification.html">Specification</a>
+    </span>
+  </li>
+  <li class="nav-item is-current-page is-active" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="clojure-specs.html">Clojure Specs</a>
+    </span>
+  </li>
+  <li class="nav-item" data-depth="1">
+    <span class="nav-line">
+    <a class="nav-link" href="library.html">Library</a>
+    </span>
+  </li>
+</ul>
+  </li>
+</ul>
+</div>
+</nav>
+<aside class="toc sidebar">
+  <div class="toc-menu"></div>
+</aside>
+<main class="article" data-ceiling="topbar">
+  <div class="article-header">
+<button class="nav-control"></button>
+<nav class="crumbs" aria-label="breadcrumbs">
+  <ul>
+    <li class="crumb"><a href="what-is-eql.html">EQL</a></li>
+    <li class="crumb"><a href="clojure-specs.html">Clojure Specs</a></li>
+  </ul>
+</nav>
+<div class="tools" role="navigation">
+  <ul>
+    <li class="tool edit"><a href="file:///Users/wilker.lucio/Development/eql/docs-src/modules/ROOT/pages/clojure-specs.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
+  </ul>
+</div>
+  </div>
+<article class="doc">
+<h1 class="page">Clojure Specs</h1>
+<div class="paragraph">
+<p>Here you can find a formal definition for the query syntax, expressed as Clojure Specs.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">(s/def ::property keyword?)
+(s/def ::special-property #{'*})
+(s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
+(s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
+(s/def ::join-key (s/or :prop ::property, :ident ::ident, :param-exp ::join-key-param-expr))
+(s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
+(s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
+(s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
+(s/def ::recursion (s/or :depth ::recursion-depth, :unbounded #{'...}))
+
+(s/def ::join-query
+  (s/with-gen
+    (s/or :query ::query
+          :union ::union
+          :recursion ::recursion)
+    (default-gen ::gen-join-query)))
+
+(s/def ::params
+  (s/with-gen map? (default-gen ::gen-params)))
+
+(s/def ::param-expr-key
+  (s/with-gen
+    (s/or :prop ::property
+          :join ::join
+          :ident ::ident)
+    (default-gen ::gen-param-expr-key)))
+
+(s/def ::param-expr
+  (s/with-gen
+    (s/and seq? (s/cat :expr ::param-expr-key :params (s/? ::params)))
+    (default-gen ::gen-param-expr)))
+
+(s/def ::join-key-param-key (s/or :prop ::property :ident ::ident))
+
+(s/def ::join-key-param-expr
+  (s/with-gen
+    (s/and seq? (s/cat :expr ::join-key-param-key :params (s/? ::params)))
+    (default-gen ::gen-join-key-param-expr)))
+
+(s/def ::mutation-key (s/with-gen symbol? (default-gen ::gen-mutation-key)))
+
+(s/def ::mutation-expr
+  (s/with-gen
+    (s/and seq? (s/cat :mutate-key ::mutation-key :params (s/? ::params)))
+    (default-gen ::gen-mutation-expr)))
+
+(s/def ::mutation-join
+  (s/map-of ::mutation-expr ::query :count 1 :conform-keys true))
+
+(s/def ::mutation
+  (s/or :mutation ::mutation-expr
+        :mutation-join ::mutation-join))
+
+(s/def ::query-expr
+  (s/or :prop ::property
+        :join ::join
+        :ident ::ident
+        :mutation ::mutation
+        :param-exp ::param-expr
+        :special ::special-property))
+
+(s/def ::query
+  (s/coll-of ::query-expr :kind vector? :gen (default-gen ::gen-query)))</code></pre>
+</div>
+</div>
+</article>
+</main>
+</div>
+<footer class="footer">
+  <div class="container">
+  </div>
+</footer>
+<script src="../../_/js/site.js"></script>
+<script async src="../../_/js/vendor/highlight.js"></script>
+  </body>
+</html>
