@@ -1,0 +1,24 @@
+site:
+  title: EDN Query Language
+  url: http://edn-query-language.org
+  start_page: eql::what-is-eql.adoc
+  keys:
+    google_analytics: UA-3833116-19
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs-src
+ui:
+  bundle:
+    url: /Users/wilker.lucio/Development/third-part/docs-ui/build/ui-bundle.zip
+    snapshot: true
+  output_dir: assets
+output:
+  dir: ./docs
+asciidoc:
+  attributes:
+    experimental: ''
+    tabs: tabs
+    toc: ~
+    xrefstyle: short
