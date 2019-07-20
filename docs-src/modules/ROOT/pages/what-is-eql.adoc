@@ -68,7 +68,7 @@ appear on EQL transaction, and they look like Clojure function calls, example:
 [(call-mutation {:data "value"})]
 ----
 
-More details in <<Mutations>>.
+More details in xref:specification#_mutations[Mutations].
 
 == Datomic Pull Syntax comparison
 
