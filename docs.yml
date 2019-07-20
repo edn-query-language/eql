@@ -2,6 +2,8 @@ site:
   title: EDN Query Language
   url: http://edn-query-language.org
   start_page: eql::what-is-eql.adoc
+  keys:
+    google_analytics: UA-3833116-19
 content:
   sources:
     - url: git@github.com:edn-query-language/eql.git
