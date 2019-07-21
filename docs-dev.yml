@@ -1,6 +1,6 @@
 site:
   title: EDN Query Language
-  url: http://edn-query-language.org
+  url: http://127.0.0.1:8080
   start_page: eql::what-is-eql.adoc
   keys:
     google_analytics: UA-3833116-19
