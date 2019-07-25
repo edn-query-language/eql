@@ -567,7 +567,7 @@
 
   (s/fdef query->ast1
     :args (s/cat :query ::query)
-    :ret :edn-query-language.ast/node)
+    :ret (s/nilable :edn-query-language.ast/node))
 
   (s/fdef ast->query
     :args (s/cat :ast :edn-query-language.ast/node)
