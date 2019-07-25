@@ -242,7 +242,9 @@
       (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
   (defmethod node-type :call [_]
-    (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params] :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
+    (s/and (s/keys
+             :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params]
+             :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
       (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
   (defmethod node-type :root [_]
@@ -565,11 +567,11 @@
 
   (s/fdef query->ast1
     :args (s/cat :query ::query)
-    :ret :edn-query-language.ast/root)
+    :ret :edn-query-language.ast/node)
 
   (s/fdef ast->query
     :args (s/cat :ast :edn-query-language.ast/node)
-    :ret :edn-query-language.ast/root)
+    :ret ::query)
 
   (s/fdef ident?
     :args (s/cat :x any?)

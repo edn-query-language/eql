@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.7]
+- Fix specs for query->ast1 and ast->query
+
 ## [0.0.6]
 - Removed `::eql/key` spec, that was a leftover from porting, `::eql/join-key` is the correct one to use.
 
