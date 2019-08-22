@@ -14,6 +14,8 @@ ui:
     url: https://github.com/wilkerlucio/docs-ui/raw/wsscode-theme/build/ui-bundle.zip
     snapshot: true
   output_dir: assets
+runtime:
+  fetch: true
 output:
   dir: ./docs
 asciidoc:
