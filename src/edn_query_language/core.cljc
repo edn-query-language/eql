@@ -1,9 +1,8 @@
 (ns edn-query-language.core
   (:refer-clojure :exclude [ident?])
   (:require [clojure.spec.alpha :as s]
-            [clojure.test.check]
-            [clojure.test.check.generators :as gen #?@(:cljs [:include-macros true])]
-            [clojure.test.check.properties]))
+            [clojure.spec.gen.alpha :as gen]
+            [edn-query-language.gen-helpers :as gen-helpers]))
 
 (def ^:dynamic *shallow-conversion*
   "Dynamic var.  When bound to true in the current thread calls to query->ast will no go past the
@@ -31,7 +30,7 @@
 
      ::gen-ident-value
      (fn gen-ident-value [_]
-       (gen/frequency [[15 gen/simple-type-printable]
+       (gen/frequency [[15 (gen/simple-type-printable)]
                        [1 (gen/return '_)]]))
 
      ::gen-ident
@@ -55,8 +54,8 @@
 
      ::gen-join-key-param-expr
      (fn gen-join-key-param-expr [{::keys [gen-join-key-param-key gen-params] :as env}]
-       (gen/let [q (gen-join-key-param-key env)
-                 p (gen-params env)]
+       (gen-helpers/let [q (gen-join-key-param-key env)
+                         p (gen-params env)]
          (list q p)))
 
      ::gen-join
@@ -91,8 +90,8 @@
 
      ::gen-param-expr
      (fn gen-param-expr [{::keys [gen-param-expr-key gen-params] :as env}]
-       (gen/let [q (gen-param-expr-key env)
-                 p (gen-params env)]
+       (gen-helpers/let [q (gen-param-expr-key env)
+                         p (gen-params env)]
          (list q p)))
 
      ::gen-query-expr
@@ -116,8 +115,8 @@
 
      ::gen-mutation-expr
      (fn gen-mutation-expr [{::keys [gen-mutation-key gen-params] :as env}]
-       (gen/let [key (gen-mutation-key env)
-                 val (gen-params env)]
+       (gen-helpers/let [key (gen-mutation-key env)
+                         val (gen-params env)]
          (list key val)))
 
      ::gen-mutation-join
