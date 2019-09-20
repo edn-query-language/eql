@@ -260,6 +260,24 @@
              ['(hello {:login "u1"})])
            nil))))
 
+(deftest test-mask-query
+  (is (= (eql/mask-query [] [])
+         []))
+  (is (= (eql/mask-query [:foo :bar] [])
+         []))
+  (is (= (eql/mask-query [:foo :bar] [:foo])
+         [:foo]))
+  (is (= (eql/mask-query [:bar :foo] [:foo])
+         [:foo]))
+  (is (= (eql/mask-query [:foo {:bar [:inside]}] [:foo])
+         [:foo]))
+  (is (= (eql/mask-query ['(:foo {:bla "meh"}) :bar] [:foo])
+         ['(:foo {:bla "meh"})]))
+  (is (= (eql/mask-query [:foo {:bar [:inside :more]}] [:foo :bar])
+         [:foo {:bar [:inside :more]}]))
+  (is (= (eql/mask-query [:foo {:bar [:inside :more]}] [:foo {:bar [:inside]}])
+         [:foo {:bar [:inside]}])))
+
 (deftest test-normalize-query-variables
   (testing "blank query"
     (is (= (eql/normalize-query-variables [])

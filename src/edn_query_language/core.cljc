@@ -532,6 +532,27 @@
   (some-> (merge-asts (query->ast qa) (query->ast qb))
     (ast->query)))
 
+(defn mask-query* [{:keys [children] :as source-ast} mask-ast]
+  (reduce
+    (fn [ast {mask-children :children
+              :keys         [key]
+              :as           mask-node}]
+      (if-let [source-node (->> children (filter (comp #{key} :key)) first)]
+        (if (and (seq (:children source-node)) (seq mask-children))
+          (update ast :children conj (mask-query* source-node mask-node))
+          (update ast :children conj source-node))
+        ast))
+    (assoc source-ast :children [])
+    (:children mask-ast)))
+
+(defn mask-query
+  "Given a source EQL query, use a mask EQL query to filter which elements to pick from
+  the source. Params will be maintaned from the source, params in mask are ignored."
+  [source mask]
+  (let [source-ast (query->ast source)
+        mask-ast   (query->ast mask)]
+    (ast->query (mask-query* source-ast mask-ast))))
+
 (defn normalize-query-variables
   "Converts ident values and param values to ::p/var."
   [query]
