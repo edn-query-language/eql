@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.9]
+- Add helper to mask queries.
+
 ## [0.0.8]
 - Make out of `query->ast1` nilable
 
