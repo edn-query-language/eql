@@ -240,6 +240,41 @@ map values can be anything. Here are more examples of parameterizing queries:
 
 WARNING: You'll need to use quote and unquote in CLJ files for calls, otherwise the lists will be evaluated as Clojure calls. Quote is not necessary in EDN files.
 
+== Recursive Queries
+
+EQL supports the concept of recursive queries, one example scenario is trying to load a structure
+like a file system, where folders and have folders inside recursively.
+
+[source,clojure]
+----
+; this is an unbounded recursive query, use ... as the join value
+
+[:entry/name {:entry/folders ...}]
+
+{:type :root,
+ :children
+ [{:type :prop, :dispatch-key :entry/name, :key :entry/name}
+  {:type :join,
+   :dispatch-key :entry/folders,
+   :key :entry/folders,
+   :query ...}]}
+
+; you can bound the recursion limit using a number as a sub-query
+
+[:entry/name {:entry/folders 3}]
+
+{:type :root,
+ :children
+ [{:type :prop, :dispatch-key :entry/name, :key :entry/name}
+  {:type :join,
+   :dispatch-key :entry/folders,
+   :key :entry/folders,
+   :query 3}]}
+----
+
+IMPORTANT: it's up to the parser to proper implement the semantics around unbounded vs
+bounded recursive queries.
+
 == Query Meta
 
 Metadata can be stored on a query. The AST will encode the metadata so that transformations to/from an AST can preserve it.
