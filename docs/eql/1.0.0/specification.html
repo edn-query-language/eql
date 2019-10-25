@@ -376,6 +376,55 @@ You&#8217;ll need to use quote and unquote in CLJ files for calls, otherwise the
 </div>
 </div>
 <div class="sect1">
+<h2 id="_recursive_queries"><a class="anchor" href="#_recursive_queries"></a>Recursive Queries</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>EQL supports the concept of recursive queries, one example scenario is trying to load a structure
+like a file system, where folders and have folders inside recursively.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-clojure hljs" data-lang="clojure">; this is an unbounded recursive query, use ... as the join value
+
+[:entry/name {:entry/folders ...}]
+
+{:type :root,
+ :children
+ [{:type :prop, :dispatch-key :entry/name, :key :entry/name}
+  {:type :join,
+   :dispatch-key :entry/folders,
+   :key :entry/folders,
+   :query ...}]}
+
+; you can bound the recursion limit using a number as a sub-query
+
+[:entry/name {:entry/folders 3}]
+
+{:type :root,
+ :children
+ [{:type :prop, :dispatch-key :entry/name, :key :entry/name}
+  {:type :join,
+   :dispatch-key :entry/folders,
+   :key :entry/folders,
+   :query 3}]}</code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+it&#8217;s up to the parser to proper implement the semantics around unbounded vs
+bounded recursive queries.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_query_meta"><a class="anchor" href="#_query_meta"></a>Query Meta</h2>
 <div class="sectionbody">
 <div class="paragraph">
