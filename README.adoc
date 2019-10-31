@@ -128,13 +128,10 @@ on how to programmatically manipulate EQL data structures.
 
 == Specification
 
-The following sections explain the features provided by the EQL syntax and the
-common usages of it. Along with code examples from the transactions, after that, we
-are going to provide the AST data that's equivalent to the transaction, the AST is the
-recommended format to transform EQL transactions programmatically. The EQL format is
-great for users and interfaces, but to transform is easier if you don't have to deal
-with the syntax details/ambiguities. The EQL library provides functions to convert from and to
-AST from EQL.
+The following sections explain the features provided by this library, including code examples.
+We show how you can work with an AST representation of an EQL expression, which is often
+an easier form to manipulate programatically. Of course, we'll also cover how to convert
+between EQL and an AST representation (bidirectionally).
 
 In the end of this section you will also find the Clojure Spec formal specification
 for the EQL syntax.
