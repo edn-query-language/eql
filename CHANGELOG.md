@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.0.10]
+- `ast->query` always returns a query, this is a bug fix but if you relied on the bad behvior this may be a breaking change, if that's the case replace your call to `ast->query` with `ast->expr`
+
 ## [0.0.9]
 - Add helper to mask queries.
 
