@@ -165,6 +165,18 @@
 (comment
   (tc/quick-check 100 (query<->ast-props) :max-size 12))
 
+(deftest test-ast->query
+  (is (= (eql/ast->query {:type         :prop
+                          :key          :foo
+                          :dispatch-key :foo})
+         [:foo]))
+
+  (is (= (eql/ast->query {:type     :root
+                          :children [{:type         :prop
+                                      :dispatch-key :foo
+                                      :key          :foo}]})
+         [:foo])))
+
 (deftest test-focus-subquery
   (is (= (eql/focus-subquery [] [])
          []))

@@ -399,7 +399,10 @@
 
 (defn ast->query [query-ast]
   "Given an AST convert it back into a query expression."
-  (ast->expr query-ast true))
+  (as-> (ast->expr query-ast true) <>
+    (if (vector? <>)
+      <>
+      [<>])))
 
 (defn ident?
   "Check if x is a EQL ident."
