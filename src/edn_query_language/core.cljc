@@ -272,15 +272,6 @@
   (cond-> target
     (meta source) (assoc :meta (meta source))))
 
-(defn symbol->ast [k]
-  {:dispatch-key k
-   :key          k})
-
-(defn keyword->ast [k]
-  {:type         :prop
-   :dispatch-key k
-   :key          k})
-
 (defn union-entry->ast [[k v] opts]
   (let [component (-> v meta :component)]
     (merge
@@ -325,7 +316,7 @@
    :dispatch-key (ffirst refm)
    :key          refm})
 
-(def join-context? map?)
+(defn join-context? [x] (map? x))
 
 (defn join->ast [join {:keys [shallow-conversion?] :as opts}]
   (let [query-root? (-> join meta :query-root)
@@ -349,23 +340,26 @@
                             (ex-info (str "Invalid join, " join)
                                      {:type :error/invalid-join})))))))
 
-(defn ident->ast [[k :as ref]]
-  {:type         :prop
-   :dispatch-key k
-   :key          ref})
-
-(defprotocol Astify
+(defprotocol ASTable
   (expr->ast [x opts]))
 
-(extend-protocol Astify
+(extend-protocol ASTable
   Symbol
-  (expr->ast [x _] (symbol->ast x))
+  (expr->ast [k _]
+    {:dispatch-key k
+     :key          k})
   Keyword
-  (expr->ast [x _] (keyword->ast x))
+  (expr->ast [k _]
+    {:type         :prop
+     :dispatch-key k
+     :key          k})
   IPersistentMap
   (expr->ast [x opts] (join->ast x opts))
   IPersistentVector
-  (expr->ast [x _] (ident->ast x))
+  (expr->ast [[k :as ref] _]
+    {:type         :prop
+     :dispatch-key k
+     :key          ref})
   IPersistentList
   (expr->ast [x opts] (call->ast x opts)))
 
