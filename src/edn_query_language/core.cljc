@@ -139,12 +139,12 @@
   (s/def ::special-property #{'*})
   (s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
   (s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
-  (s/def ::base-context (s/with-gen (s/map-of ::property ::ident-value :min-count 1, :conform-keys true)
+  (s/def ::join-context (s/with-gen (s/map-of ::property ::ident-value :min-count 1, :conform-keys true)
                           (default-gen ::gen-ident)))
   (s/def ::join-key (s/or :prop ::property
                           :ident ::ident
                           :param-exp ::join-key-param-expr
-                          :base-context ::base-context))
+                          :join-context ::join-context))
   (s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
   (s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
   (s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
@@ -208,7 +208,10 @@
   ;; ast specs
 
   (s/def :edn-query-language.ast/query ::join-query)
-  (s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol? :base-context ::base-context))
+  (s/def :edn-query-language.ast/key (s/or :prop ::property
+                                           :ident ::ident
+                                           :sym symbol?
+                                           :join-context ::join-context))
   (s/def :edn-query-language.ast/dispatch-key (s/or :prop ::property :sym symbol?))
   (s/def :edn-query-language.ast/union-key ::property)
 
@@ -309,16 +312,18 @@
   [query-expr]
   (-> (query->ast query-expr) :children first))
 
-(defn base-context->ast [refm]
+(defn join-context->ast [refm]
   {:type         :prop
    :dispatch-key (ffirst refm)
    :key          refm})
 
+(def join-context? map?)
+
 (defn join->ast [join {:keys [shallow-conversion?] :as opts}]
   (let [query-root? (-> join meta :query-root)
         [k v]       (first join)
-        ast         (if (map? k)
-                      (base-context->ast k)
+        ast         (if (join-context? k)
+                      (join-context->ast k)
                       (expr->ast k opts))
         type        (if (= :call (:type ast)) :call :join)
         component   (-> v meta :component)]

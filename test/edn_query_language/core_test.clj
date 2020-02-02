@@ -58,7 +58,7 @@
                         :query        [:b],
                         :children     [{:type :prop, :dispatch-key :b, :key :b}]}]})))
 
-  (testing "join with base context"
+  (testing "join with context"
     (is (= (tquery->ast [{{:a 42 :c "bar"} [:b]}])
            {:type     :root,
             :children [{:type         :join,
@@ -311,7 +311,7 @@
     (is (= (eql/normalize-query-variables [:a :b :c])
            [:a :b :c])))
 
-  (testing "base context"
+  (testing "join context"
     (is (= (eql/normalize-query-variables [{{:foo "bar" :baz "bar"} [:a]}])
            [{{:foo ::eql/var, :baz ::eql/var} [:a]}])))
 
