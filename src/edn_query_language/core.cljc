@@ -208,7 +208,7 @@
   ;; ast specs
 
   (s/def :edn-query-language.ast/query ::join-query)
-  (s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol?))
+  (s/def :edn-query-language.ast/key (s/or :prop ::property :ident ::ident :sym symbol? :base-context ::base-context))
   (s/def :edn-query-language.ast/dispatch-key (s/or :prop ::property :sym symbol?))
   (s/def :edn-query-language.ast/union-key ::property)
 
@@ -567,18 +567,24 @@
         mask-ast   (query->ast mask)]
     (ast->query (mask-query* source-ast mask-ast))))
 
+(defn normalize-map-query-variables [m]
+  (into (empty m) (map (fn [[k]] [k ::var])) m))
+
 (defn normalize-query-variables
   "Converts ident values and param values to ::p/var."
   [query]
   (->> (query->ast query)
        (transduce-children
-        (map (fn [x]
+        (map (fn [{:keys [key params] :as x}]
                (cond-> x
-                 (ident? (:key x))
-                 (assoc :key [(first (:key x)) ::var])
+                 (ident? key)
+                 (assoc :key [(first key) ::var])
 
-                 (:params x)
-                 (update :params #(into {} (map (fn [[k _]] [k ::var])) %))))))
+                 (map? key)
+                 (update :key normalize-map-query-variables)
+
+                 params
+                 (update :params normalize-map-query-variables)))))
        (ast->query)))
 
 (defn query-id

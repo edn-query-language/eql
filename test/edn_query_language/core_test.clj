@@ -58,6 +58,15 @@
                         :query        [:b],
                         :children     [{:type :prop, :dispatch-key :b, :key :b}]}]})))
 
+  (testing "join with base context"
+    (is (= (tquery->ast [{{:a 42 :c "bar"} [:b]}])
+           {:type     :root,
+            :children [{:type         :join,
+                        :dispatch-key :a,
+                        :key          {:a 42 :c "bar"}
+                        :query        [:b],
+                        :children     [{:type :prop, :dispatch-key :b, :key :b}]}]})))
+
   (testing "param expression"
     (is (= (tquery->ast ['(:a {:foo "bar"})])
            {:type     :root,
@@ -241,6 +250,9 @@
   (is (= (eql/merge-queries [{:user [:name]}] [{:user [:email]}])
          [{:user [:name :email]}]))
 
+  (is (= (eql/merge-queries [{{:user/id 42 :user/age 69} [:name]}] [{{:user/id 42 :user/age 69} [:email]}])
+         [{{:user/id 42 :user/age 69}[:name :email]}]))
+
   (is (= (eql/merge-queries [:a] [{:a [:x]}])
          [{:a [:x]}]))
 
@@ -249,27 +261,27 @@
 
   (testing "don't merge queries with different params"
     (is (= (eql/merge-queries ['({:user [:name]} {:login "u1"})]
-             ['({:user [:email]} {:login "u2"})])
+                              ['({:user [:email]} {:login "u2"})])
            nil)))
 
   (testing "don't merge queries with different params"
     (is (= (eql/merge-queries ['(:user {:login "u1"})]
-             ['(:user {:login "u2"})])
+                              ['(:user {:login "u2"})])
            nil)))
 
   (testing "merge when params are same"
     (is (= (eql/merge-queries ['({:user [:name]} {:login "u1"})]
-             ['({:user [:email]} {:login "u1"})])
+                              ['({:user [:email]} {:login "u1"})])
            ['({:user [:name :email]} {:login "u1"})])))
 
   (testing "calls can't be merged when same name occurs"
     (is (= (eql/merge-queries ['(hello {:login "u1"})]
-             ['(hello {:bla "2"})])
+                              ['(hello {:bla "2"})])
            nil)))
 
   (testing "even when parameters are the same"
     (is (= (eql/merge-queries ['(hello {:login "u1"})]
-             ['(hello {:login "u1"})])
+                              ['(hello {:login "u1"})])
            nil))))
 
 (deftest test-mask-query
@@ -299,6 +311,10 @@
     (is (= (eql/normalize-query-variables [:a :b :c])
            [:a :b :c])))
 
+  (testing "base context"
+    (is (= (eql/normalize-query-variables [{{:foo "bar" :baz "bar"} [:a]}])
+           [{{:foo ::eql/var, :baz ::eql/var} [:a]}])))
+
   (testing "normalize ident values"
     (is (= (eql/normalize-query-variables [[:foo "bar"]])
            [[:foo ::eql/var]])))
@@ -312,7 +328,7 @@
            '[:a :b
              {[:join ::eql/var]
               [({:c [:d]}
-                 {:page ::eql/var})]}]))))
+                {:page ::eql/var})]}]))))
 
 (deftest test-query-id
   (is (= (eql/query-id '[:a :b {[:join "val"] [{(:c {:page 10}) [:d]}]}])
