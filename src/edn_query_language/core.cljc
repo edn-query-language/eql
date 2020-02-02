@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [ident?])
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
-            [edn-query-language.gen-helpers :as gen-helpers]))
+            [edn-query-language.gen-helpers :as gen-helpers])
+  (:import [clojure.lang IPersistentList IPersistentMap IPersistentVector Keyword Symbol]))
 
 #?(:clj  (def INCLUDE_SPECS true)
    :cljs (goog-define INCLUDE_SPECS true))
@@ -15,13 +16,13 @@
      4
 
      ::gen-property
-     (fn gen-property [_] gen/keyword-ns)
+     (fn gen-property [_] (gen/keyword-ns))
 
      ::gen-special-property
      (fn gen-special-property [_] (gen/return '*))
 
      ::gen-ident-key
-     (fn gen-ident-key [_] gen/keyword-ns)
+     (fn gen-ident-key [_] (gen/keyword-ns))
 
      ::gen-ident-value
      (fn gen-ident-value [_]
@@ -34,8 +35,16 @@
         (gen-ident-key env)
         (gen-ident-value env)))
 
+     ::gen-join-context
+     (fn gen-join-context [{::keys [gen-ident-key gen-ident-value] :as env}]
+       (tap> [(gen-ident-key env) (gen-ident-value env) env])
+       (gen/map
+        (gen-ident-key env)
+        (gen-ident-value env)
+        {:min-elements 1}))
+
      ::gen-params
-     (fn gen-params [_] (gen/map gen/any-printable gen/any-printable))
+     (fn gen-params [_] (gen/map (gen/any-printable) (gen/any-printable)))
 
      ::gen-join-key
      (fn gen-join-key [{::keys [gen-property gen-ident gen-join-key-param-expr] :as env}]
@@ -64,7 +73,7 @@
                        [1 (gen-recursion env)]]))
 
      ::gen-union-key
-     (fn gen-union-key [_] gen/keyword-ns)
+     (fn gen-union-key [_] (gen/keyword-ns))
 
      ::gen-union
      (fn gen-union [{::keys [gen-union-key gen-query] :as env}]
@@ -106,7 +115,7 @@
          (gen/vector-distinct (gen-property env))))
 
      ::gen-mutation-key
-     (fn gen-mutation-key [_] gen/symbol)
+     (fn gen-mutation-key [_] (gen/symbol))
 
      ::gen-mutation-expr
      (fn gen-mutation-expr [{::keys [gen-mutation-key gen-params] :as env}]
@@ -139,7 +148,7 @@
   (s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
   (s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
   (s/def ::join-context (s/with-gen (s/map-of ::property ::ident-value :min-count 1, :conform-keys true)
-                          (default-gen ::gen-ident)))
+                          (default-gen ::gen-join-context)))
   (s/def ::join-key (s/or :prop ::property
                           :ident ::ident
                           :param-exp ::join-key-param-expr
@@ -345,18 +354,20 @@
    :dispatch-key k
    :key          ref})
 
-(defn expr->ast
-  "Given a query expression convert it into an AST."
-  [x opts]
-  (cond
-    (symbol? x)  (symbol->ast x)
-    (keyword? x) (keyword->ast x)
-    (map? x)     (join->ast x opts)
-    (vector? x)  (ident->ast x)
-    (seq? x)     (call->ast x opts)
-    :else        (throw
-                  (ex-info (str "Invalid expression " x)
-                           {:type :error/invalid-expression}))))
+(defprotocol Astify
+  (expr->ast [x opts]))
+
+(extend-protocol Astify
+  Symbol
+  (expr->ast [x _] (symbol->ast x))
+  Keyword
+  (expr->ast [x _] (keyword->ast x))
+  IPersistentMap
+  (expr->ast [x opts] (join->ast x opts))
+  IPersistentVector
+  (expr->ast [x _] (ident->ast x))
+  IPersistentList
+  (expr->ast [x opts] (call->ast x opts)))
 
 (defn wrap-expr [root? expr]
   (if root?
@@ -609,7 +620,7 @@
 
   (s/fdef query->ast
     :args (s/alt
-           :without-opts(s/cat :query (s/nilable ::query))
+           :without-opts (s/cat :query (s/nilable ::query))
            :with-opts (s/cat :query (s/nilable ::query)
                              :opts (s/nilable (s/keys :opt-un [::shallow-conversion?]))))
     :ret :edn-query-language.ast/root)
