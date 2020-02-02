@@ -5,11 +5,6 @@
             [clojure.test.check.generators :as gen #?@(:cljs [:include-macros true])]
             [clojure.test.check.properties]))
 
-(def ^:dynamic *shallow-conversion*
-  "Dynamic var.  When bound to true in the current thread calls to query->ast will no go past the
-  first level of children.  This is useful when you just want the AST for one layer of a query."
-  false)
-
 #?(:clj  (def INCLUDE_SPECS true)
    :cljs (goog-define INCLUDE_SPECS true))
 
@@ -37,8 +32,8 @@
      ::gen-ident
      (fn gen-ident [{::keys [gen-ident-key gen-ident-value] :as env}]
        (gen/tuple
-         (gen-ident-key env)
-         (gen-ident-value env)))
+        (gen-ident-key env)
+        (gen-ident-value env)))
 
      ::gen-params
      (fn gen-params [_] (gen/map gen/any-printable gen/any-printable))
@@ -144,7 +139,12 @@
   (s/def ::special-property #{'*})
   (s/def ::ident-value (s/with-gen any? (default-gen ::gen-ident-value)))
   (s/def ::ident (s/with-gen (s/tuple ::property ::ident-value) (default-gen ::gen-ident)))
-  (s/def ::join-key (s/or :prop ::property, :ident ::ident, :param-exp ::join-key-param-expr))
+  (s/def ::base-context (s/with-gen (s/map-of ::property ::ident-value :min-count 1, :conform-keys true)
+                          (default-gen ::gen-ident)))
+  (s/def ::join-key (s/or :prop ::property
+                          :ident ::ident
+                          :param-exp ::join-key-param-expr
+                          :base-context ::base-context))
   (s/def ::join (s/map-of ::join-key ::join-query, :count 1, :conform-keys true))
   (s/def ::union (s/map-of ::property ::query, :min-count 1, :conform-keys true))
   (s/def ::recursion-depth (s/with-gen nat-int? (default-gen ::gen-depth)))
@@ -217,8 +217,8 @@
 
   (s/def :edn-query-language.ast/root
     (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/children])
-      #(= :root (:type %))
-      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
+           #(= :root (:type %))
+           (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
   (defmulti node-type :type)
 
@@ -230,22 +230,22 @@
 
   (defmethod node-type :join [_]
     (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key :edn-query-language.ast/query] :opt-un [:edn-query-language.ast/children])
-      #(if (-> % :query first (= :recursion)) % (if (contains? % :children) % false))
-      (fn [x] (every? (comp #(contains? #{:prop :join :union :call nil} %) :type) (:children x)))))
+           #(if (-> % :query first (= :recursion)) % (if (contains? % :children) % false))
+           (fn [x] (every? (comp #(contains? #{:prop :join :union :call nil} %) :type) (:children x)))))
 
   (defmethod node-type :union [_]
     (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/query :edn-query-language.ast/children])
-      #(every? (comp #{:union-entry} :type) (:children %))))
+           #(every? (comp #{:union-entry} :type) (:children %))))
 
   (defmethod node-type :union-entry [_]
     (s/and (s/keys :req-un [:edn-query-language.ast/type :edn-query-language.ast/union-key :edn-query-language.ast/query :edn-query-language.ast/children])
-      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
+           (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
   (defmethod node-type :call [_]
     (s/and (s/keys
-             :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params]
-             :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
-      (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
+            :req-un [:edn-query-language.ast/type :edn-query-language.ast/key :edn-query-language.ast/dispatch-key ::params]
+            :opt-un [:edn-query-language.ast/query :edn-query-language.ast/children])
+           (fn [x] (every? (comp #(contains? #{:prop :join :call nil} %) :type) (:children x)))))
 
   (defmethod node-type :root [_]
     (s/spec :edn-query-language.ast/root))
@@ -270,48 +270,56 @@
    :dispatch-key k
    :key          k})
 
-(defn union-entry->ast [[k v]]
+(defn union-entry->ast [[k v] opts]
   (let [component (-> v meta :component)]
     (merge
-      {:type      :union-entry
-       :union-key k
-       :query     v
-       :children  (into [] (map expr->ast) v)}
-      (when-not (nil? component)
-        {:component component}))))
+     {:type      :union-entry
+      :union-key k
+      :query     v
+      :children  (into [] (map #(expr->ast % opts)) v)}
+     (when-not (nil? component)
+       {:component component}))))
 
-(defn union->ast [m]
+(defn union->ast [m opts]
   {:type     :union
    :query    m
-   :children (into [] (map union-entry->ast) m)})
+   :children (into [] (map #(union-entry->ast % opts)) m)})
 
-(defn call->ast [[f args :as call]]
+(defn call->ast [[f args :as call] opts]
   (if (= 'quote f)
-    (assoc (expr->ast args) :target (or (-> call meta :target) :remote))
-    (let [ast (update-in (expr->ast f) [:params] merge (or args {}))]
+    (assoc (expr->ast args opts) :target (or (-> call meta :target) :remote))
+    (let [ast (update-in (expr->ast f opts) [:params] merge (or args {}))]
       (cond-> (mark-meta call ast)
         (symbol? (:dispatch-key ast)) (assoc :type :call)))))
 
 (defn query->ast
   "Convert a query to its AST representation."
-  [query]
-  (let [component (-> query meta :component)]
-    (merge
+  ([query] (query->ast query nil))
+  ([query opts]
+   (let [component (-> query meta :component)]
+     (merge
       (mark-meta query
-        {:type     :root
-         :children (into [] (map expr->ast) query)})
+                 {:type     :root
+                  :children (into [] (map #(expr->ast % opts)) query)})
       (when-not (nil? component)
-        {:component component}))))
+        {:component component})))))
 
 (defn query->ast1
   "Call query->ast and return the first children."
   [query-expr]
   (-> (query->ast query-expr) :children first))
 
-(defn join->ast [join]
+(defn base-context->ast [refm]
+  {:type         :prop
+   :dispatch-key (ffirst refm)
+   :key          refm})
+
+(defn join->ast [join {:keys [shallow-conversion?] :as opts}]
   (let [query-root? (-> join meta :query-root)
-        [k v] (first join)
-        ast         (expr->ast k)
+        [k v]       (first join)
+        ast         (if (map? k)
+                      (base-context->ast k)
+                      (expr->ast k opts))
         type        (if (= :call (:type ast)) :call :join)
         component   (-> v meta :component)]
     (merge ast
@@ -320,31 +328,31 @@
              {:component component})
            (when query-root?
              {:query-root true})
-      (when-not (or (number? v) (= '... v) *shallow-conversion*)
+           (when-not (or (number? v) (= '... v) shallow-conversion?)
              (cond
-               (vector? v) {:children (into [] (map expr->ast) v)}
-               (map? v) {:children [(union->ast v)]}
-               :else (throw
-                       (ex-info (str "Invalid join, " join)
-                         {:type :error/invalid-join})))))))
+               (vector? v) {:children (into [] (map #(expr->ast % opts)) v)}
+               (map? v)    {:children [(union->ast v opts)]}
+               :else       (throw
+                            (ex-info (str "Invalid join, " join)
+                                     {:type :error/invalid-join})))))))
 
-(defn ident->ast [[k id :as ref]]
+(defn ident->ast [[k :as ref]]
   {:type         :prop
    :dispatch-key k
    :key          ref})
 
 (defn expr->ast
   "Given a query expression convert it into an AST."
-  [x]
+  [x opts]
   (cond
-    (symbol? x) (symbol->ast x)
+    (symbol? x)  (symbol->ast x)
     (keyword? x) (keyword->ast x)
-    (map? x) (join->ast x)
-    (vector? x) (ident->ast x)
-    (seq? x) (call->ast x)
-    :else (throw
-            (ex-info (str "Invalid expression " x)
-              {:type :error/invalid-expression}))))
+    (map? x)     (join->ast x opts)
+    (vector? x)  (ident->ast x)
+    (seq? x)     (call->ast x opts)
+    :else        (throw
+                  (ex-info (str "Invalid expression " x)
+                           {:type :error/invalid-expression}))))
 
 (defn wrap-expr [root? expr]
   (if root?
@@ -368,37 +376,38 @@
        (not (nil? component)) (vary-meta assoc :component component))
      (let [{:keys [key query query-root params]} ast]
        (wrap-expr query-root
-         (if (and params (not= :call type))
-           (let [expr (ast->expr (dissoc ast :params) unparse?)]
-             (parameterize expr params))
-           (let [key (if (= :call type) (parameterize key params) key)]
-             (if (or (= :join type)
-                     (and (= :call type) (:children ast)))
-               (if (and (not= '... query) (not (number? query))
-                        (or (true? unparse?)
-                            (= :call type)))
-                 (let [{:keys [children]} ast
-                       query-meta (meta query)]
-                   (if (and (== 1 (count children))
-                            (= :union (:type (first children)))) ;; UNION
-                     (with-meta
-                       {key (into (cond-> (with-meta {} ast-meta)
-                                    component (vary-meta assoc :component component))
-                                  (map (fn [{:keys [union-key children component]}]
-                                         [union-key
-                                          (cond-> (into [] (map #(ast->expr % unparse?)) children)
-                                            (not (nil? component)) (vary-meta assoc :component component))]))
-                                  (:children (first children)))}
-                       ast-meta)
-                     (with-meta
-                       {key (cond-> (into (with-meta [] query-meta) (map #(ast->expr % unparse?)) children)
-                              (not (nil? component)) (vary-meta assoc :component component))}
-                       ast-meta)))
-                 (with-meta {key query} ast-meta))
-               key))))))))
+                  (if (and params (not= :call type))
+                    (let [expr (ast->expr (dissoc ast :params) unparse?)]
+                      (parameterize expr params))
+                    (let [key (if (= :call type) (parameterize key params) key)]
+                      (if (or (= :join type)
+                              (and (= :call type) (:children ast)))
+                        (if (and (not= '... query) (not (number? query))
+                                 (or (true? unparse?)
+                                     (= :call type)))
+                          (let [{:keys [children]} ast
+                                query-meta (meta query)]
+                            (if (and (== 1 (count children))
+                                     (= :union (:type (first children)))) ;; UNION
+                              (with-meta
+                                {key (into (cond-> (with-meta {} ast-meta)
+                                             component (vary-meta assoc :component component))
+                                           (map (fn [{:keys [union-key children component]}]
+                                                  [union-key
+                                                   (cond-> (into [] (map #(ast->expr % unparse?)) children)
+                                                     (not (nil? component)) (vary-meta assoc :component component))]))
+                                           (:children (first children)))}
+                                ast-meta)
+                              (with-meta
+                                {key (cond-> (into (with-meta [] query-meta) (map #(ast->expr % unparse?)) children)
+                                       (not (nil? component)) (vary-meta assoc :component component))}
+                                ast-meta)))
+                          (with-meta {key query} ast-meta))
+                        key))))))))
 
-(defn ast->query [query-ast]
+(defn ast->query
   "Given an AST convert it back into a query expression."
+  [query-ast]
   (as-> (ast->expr query-ast true) <>
     (if (vector? <>)
       <>
@@ -419,14 +428,14 @@
   [query-ast sub-ast]
   (let [s-index (into {} (map #(vector (:union-key %) %)) (:children sub-ast))]
     (assoc query-ast
-      :children
-      (reduce
-        (fn [children {:keys [union-key] :as union-entry}]
-          (if-let [sub (get s-index union-key)]
-            (conj children (focus-subquery* union-entry sub))
-            (conj children union-entry)))
-        []
-        (:children query-ast)))))
+           :children
+           (reduce
+            (fn [children {:keys [union-key] :as union-entry}]
+              (if-let [sub (get s-index union-key)]
+                (conj children (focus-subquery* union-entry sub))
+                (conj children union-entry)))
+            []
+            (:children query-ast)))))
 
 (defn focus-subquery*
   "Internal implementation of focus-subquery, you can use this function directly if
@@ -434,22 +443,22 @@
   [query-ast sub-ast]
   (let [q-index (into {} (map #(vector (:key %) %)) (:children query-ast))]
     (assoc query-ast
-      :children
-      (reduce
-        (fn [children {:keys [key type] :as focus}]
-          (if-let [source (get q-index key)]
-            (cond
-              (= :join type (:type source))
-              (conj children (focus-subquery* source focus))
+           :children
+           (reduce
+            (fn [children {:keys [key type] :as focus}]
+              (if-let [source (get q-index key)]
+                (cond
+                  (= :join type (:type source))
+                  (conj children (focus-subquery* source focus))
 
-              (= :union type (:type source))
-              (conj children (focus-subquery-union* source focus))
+                  (= :union type (:type source))
+                  (conj children (focus-subquery-union* source focus))
 
-              :else
-              (conj children source))
-            children))
-        []
-        (:children sub-ast)))))
+                  :else
+                  (conj children source))
+                children))
+            []
+            (:children sub-ast)))))
 
 (defn focus-subquery
   "Given a query, focus it along the specified query expression.
@@ -480,8 +489,8 @@
   (cond-> node
     (seq children)
     (update :children
-      (fn [children]
-        (into [] (comp xform (map #(transduce-children xform %))) children)))))
+            (fn [children]
+              (into [] (comp xform (map #(transduce-children xform %))) children)))))
 
 (defn union-children?
   "Given an AST point, check if the children is a union query type."
@@ -507,9 +516,11 @@
   "Merges two ast's."
   [qa qb]
   (reduce (fn [ast {:keys [key type params] :as item-b}]
-            (if-let [[idx item] (->> ast :children
-                                     (keep-indexed #(if (-> %2 :key (= key)) [%1 %2]))
-                                     first)]
+            (if-let [[idx item] (->> ast
+                                     :children
+                                     (keep-indexed #(when (-> %2 :key (= key))
+                                                      [%1 %2]))
+                                     (first))]
               (cond
                 (or (= :join (:type item) type)
                     (= :prop (:type item) type))
@@ -526,27 +537,27 @@
 
                 :else ast)
               (update ast :children conj item-b)))
-    qa
-    (:children qb)))
+          qa
+          (:children qb)))
 
 (defn merge-queries
   "Merges two queries"
   [qa qb]
   (some-> (merge-asts (query->ast qa) (query->ast qb))
-    (ast->query)))
+          (ast->query)))
 
 (defn mask-query* [{:keys [children] :as source-ast} mask-ast]
   (reduce
-    (fn [ast {mask-children :children
-              :keys         [key]
-              :as           mask-node}]
-      (if-let [source-node (->> children (filter (comp #{key} :key)) first)]
-        (if (and (seq (:children source-node)) (seq mask-children))
-          (update ast :children conj (mask-query* source-node mask-node))
-          (update ast :children conj source-node))
-        ast))
-    (assoc source-ast :children [])
-    (:children mask-ast)))
+   (fn [ast {mask-children :children
+             :keys         [key]
+             :as           mask-node}]
+     (if-let [source-node (->> children (filter (comp #{key} :key)) first)]
+       (if (and (seq (:children source-node)) (seq mask-children))
+         (update ast :children conj (mask-query* source-node mask-node))
+         (update ast :children conj source-node))
+       ast))
+   (assoc source-ast :children [])
+   (:children mask-ast)))
 
 (defn mask-query
   "Given a source EQL query, use a mask EQL query to filter which elements to pick from
@@ -561,13 +572,13 @@
   [query]
   (->> (query->ast query)
        (transduce-children
-         (map (fn [x]
-                (cond-> x
-                  (ident? (:key x))
-                  (assoc :key [(first (:key x)) ::var])
+        (map (fn [x]
+               (cond-> x
+                 (ident? (:key x))
+                 (assoc :key [(first (:key x)) ::var])
 
-                  (:params x)
-                  (update :params #(into {} (map (fn [[k _]] [k ::var])) %))))))
+                 (:params x)
+                 (update :params #(into {} (map (fn [[k _]] [k ::var])) %))))))
        (ast->query)))
 
 (defn query-id
@@ -581,12 +592,16 @@
   "Like query->ast, but does not follow joins.  Useful for efficiently getting just the top-level entries in
    a large query."
   [query]
-  (binding [*shallow-conversion* true]
-    (query->ast query)))
+  (query->ast query {:shallow-conversion? true}))
 
 (when INCLUDE_SPECS
+  (s/def ::shallow-conversion? boolean?)
+
   (s/fdef query->ast
-    :args (s/cat :query (s/nilable ::query))
+    :args (s/alt
+           :without-opts(s/cat :query (s/nilable ::query))
+           :with-opts (s/cat :query (s/nilable ::query)
+                             :opts (s/nilable (s/keys :opt-un [::shallow-conversion?]))))
     :ret :edn-query-language.ast/root)
 
   (s/fdef query->ast1
