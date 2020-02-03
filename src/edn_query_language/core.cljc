@@ -359,6 +359,8 @@
      :dispatch-key k
      :key          ref})
   IPersistentList
+  (expr->ast [x opts] (call->ast x opts))
+  Cons
   (expr->ast [x opts] (call->ast x opts)))
 
 (defn wrap-expr [root? expr]
