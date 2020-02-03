@@ -3,7 +3,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.spec.gen.alpha :as gen]
             [edn-query-language.gen-helpers :as gen-helpers])
-  (:import [clojure.lang IPersistentList IPersistentMap IPersistentVector Keyword Symbol]))
+  (:import [clojure.lang Cons IPersistentList IPersistentMap IPersistentVector Keyword Symbol]))
 
 #?(:clj  (def INCLUDE_SPECS true)
    :cljs (goog-define INCLUDE_SPECS true))
