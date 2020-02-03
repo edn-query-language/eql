@@ -266,7 +266,8 @@
 
 ;; library
 
-(declare expr->ast)
+(defprotocol ASTable
+  (expr->ast [x opts]))
 
 (defn- mark-meta [source target]
   (cond-> target
@@ -339,9 +340,6 @@
                :else       (throw
                             (ex-info (str "Invalid join, " join)
                                      {:type :error/invalid-join})))))))
-
-(defprotocol ASTable
-  (expr->ast [x opts]))
 
 (extend-protocol ASTable
   Symbol
