@@ -1,0 +1,1 @@
+{:lint-as {edn-query-language.gen-helpers/let clojure.core/let}}
