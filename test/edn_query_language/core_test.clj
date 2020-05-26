@@ -6,14 +6,15 @@
             [clojure.test.check.clojure-test :as test]
             [clojure.test.check.generators :as gen]
             [clojure.test.check.properties :as props]
-            [edn-query-language.core :as eql]))
+            [edn-query-language.core :as eql]
+            [edn-query-language.gen :as eql-gen]))
 
 (s.test/instrument)
 
 ;; spec tests
 
 (defn valid-queries-props []
-  (props/for-all [query (eql/make-gen {} ::eql/gen-query)]
+  (props/for-all [query (eql-gen/make-gen {} ::eql-gen/gen-query)]
     (s/valid? ::eql/query query)))
 
 (test/defspec generator-makes-valid-queries {:max-size 12 :num-tests 50} (valid-queries-props))
@@ -148,10 +149,10 @@
                          :children     [{:type :prop, :dispatch-key :sub-query, :key :sub-query}]}]}))))
 
 (defn query<->ast-props []
-  (props/for-all [query (eql/make-gen {::eql/gen-params
+  (props/for-all [query (eql-gen/make-gen {::eql-gen/gen-params
                                        (fn [_]
                                          (gen/map gen/keyword gen/string-alphanumeric))}
-                          ::eql/gen-query)]
+                          ::eql-gen/gen-query)]
     (let [ast (-> query
                   eql/query->ast
                   eql/ast->query
