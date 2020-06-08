@@ -242,8 +242,8 @@ WARNING: You'll need to use quote and unquote in CLJ files for calls, otherwise 
 
 == Recursive Queries
 
-EQL supports the concept of recursive queries, one example scenario is trying to load a structure
-like a file system, where folders and have folders inside recursively.
+EQL supports the concept of recursive queries. For example, imagine the scenario of trying to load a structure
+like a file system, where folders recursively contain folders.
 
 [source,clojure]
 ----

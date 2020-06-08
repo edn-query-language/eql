@@ -54,7 +54,7 @@ It works the same to represent nested sequences:
 ----
 
 TIP: Although with just EQL you can't know if a key value is expected to be a single item or a sequence, you
-can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
+can have this information setup out of band using Clojure specs. If you do so, you can instrospect the spec
 and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
 if the response of a key is a single item or a sequence.
 
