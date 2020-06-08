@@ -272,7 +272,7 @@ like a file system, where folders and have folders inside recursively.
    :query 3}]}
 ----
 
-IMPORTANT: it's up to the parser to proper implement the semantics around unbounded vs
+IMPORTANT: it's up to the parser to properly implement the semantics around unbounded vs
 bounded recursive queries.
 
 == Query Meta
@@ -416,7 +416,7 @@ that names the mutation, and the second is a map with input data.
 ----
 
 NOTE: Mutations and parameters are very similar, their main difference
-is that once uses symbols as keys, and the other uses one of the read options (properties,
+is that one uses symbols as keys, and the other uses one of the read options (properties,
 idents, joins).
 
 The EQL notation does not technically limit the combination of expressions that contain

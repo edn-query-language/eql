@@ -96,7 +96,7 @@ there is a good set of intersection in features between both, as:
 
 GraphQL has a type system in its definition, and it is required for a GraphQL system to work. EQL has
 no such thing, and it dictates only the syntax but not the semantics. Some features in
-GraphQL just doesn't make sense in EQL, like fragments, since EQL is already a data format (EDN),
+GraphQL don't make sense in EQL, like fragments, since EQL is already a data format (EDN),
 it's easy to compose data as you would do in a regular Clojure program, for that reason
 many features are not necessary because EQL is a parseable data format with all the Clojure
 tools already available to operate on top of it. Also read the xref:library#_ast_encodedecode[AST Encode/Decode]
