@@ -332,3 +332,10 @@
                          {:type :join, :dispatch-key :table, :key [:table 1], :query [:z {:other [:m :n]}]}
                          {:type :join, :dispatch-key :ujoin, :key :ujoin, :query {:u1 [:x], :u2 [:y]}}]}
             ast)))))
+
+(deftest eql-ast-test
+  (is (= (eql/eql-ast [:foo])
+         (eql/query->ast [:foo])))
+
+  (is (= (eql/eql-ast (eql/eql-ast [:foo]))
+         (eql/query->ast [:foo]))))

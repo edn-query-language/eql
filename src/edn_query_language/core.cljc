@@ -1,6 +1,9 @@
 (ns edn-query-language.core
   (:refer-clojure :exclude [ident?])
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s])
+  #?(:clj (:import (clojure.lang PersistentVector
+                                 PersistentArrayMap
+                                 PersistentHashMap))))
 
 (def ^:dynamic *shallow-conversion*
   "Dynamic var.  When bound to true in the current thread calls to query->ast will no go past the
@@ -445,6 +448,26 @@
   [query]
   (binding [*shallow-conversion* true]
     (query->ast query)))
+
+(defprotocol IProvideEQLAst
+  (-eql-ast [this]))
+
+(extend-protocol IProvideEQLAst
+  PersistentVector
+  (-eql-ast [this] (query->ast this))
+
+  PersistentArrayMap
+  (-eql-ast [this] this)
+
+  PersistentHashMap
+  (-eql-ast [this] this))
+
+(defn eql-ast
+  "If param is a vector it assumes its an EEQL query and converts to AST. If its an map,
+  it assumes its already and AST and returns as is. The implementation uses protocols
+  for high performance dispatch."
+  [eql-query-or-ast]
+  (-eql-ast eql-query-or-ast))
 
 (when INCLUDE_SPECS
   (s/fdef query->ast
