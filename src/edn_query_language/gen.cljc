@@ -1,9 +1,8 @@
 (ns edn-query-language.gen
   (:require
-    [clojure.test.check]
-    [clojure.test.check.generators :as gen #?@(:cljs [:include-macros true])]
-    [clojure.test.check.properties]
     [clojure.spec.alpha :as s]
+    [clojure.spec.gen.alpha :as gen]
+    [edn-query-language.gen-helpers :as genh]
     [edn-query-language.core :as eql]))
 
 (when eql/INCLUDE_SPECS
@@ -14,17 +13,17 @@
      4
 
      ::gen-property
-     (fn gen-property [_] gen/keyword-ns)
+     (fn gen-property [_] (gen/keyword-ns))
 
      ::gen-special-property
      (fn gen-special-property [_] (gen/return '*))
 
      ::gen-ident-key
-     (fn gen-ident-key [_] gen/keyword-ns)
+     (fn gen-ident-key [_] (gen/keyword-ns))
 
      ::gen-ident-value
      (fn gen-ident-value [_]
-       (gen/frequency [[15 gen/simple-type-printable]
+       (gen/frequency [[15 (gen/simple-type-printable)]
                        [1 (gen/return '_)]]))
 
      ::gen-ident
@@ -34,7 +33,7 @@
          (gen-ident-value env)))
 
      ::gen-params
-     (fn gen-params [_] (gen/map gen/any-printable gen/any-printable))
+     (fn gen-params [_] (gen/map (gen/any-printable) (gen/any-printable)))
 
      ::gen-join-key
      (fn gen-join-key [{::keys [gen-property gen-ident gen-join-key-param-expr] :as env}]
@@ -48,8 +47,8 @@
 
      ::gen-join-key-param-expr
      (fn gen-join-key-param-expr [{::keys [gen-join-key-param-key gen-params] :as env}]
-       (gen/let [q (gen-join-key-param-key env)
-                 p (gen-params env)]
+       (genh/let [q (gen-join-key-param-key env)
+                  p (gen-params env)]
          (list q p)))
 
      ::gen-join
@@ -63,7 +62,7 @@
                        [1 (gen-recursion env)]]))
 
      ::gen-union-key
-     (fn gen-union-key [_] gen/keyword-ns)
+     (fn gen-union-key [_] (gen/keyword-ns))
 
      ::gen-union
      (fn gen-union [{::keys [gen-union-key gen-query] :as env}]
@@ -84,8 +83,8 @@
 
      ::gen-param-expr
      (fn gen-param-expr [{::keys [gen-param-expr-key gen-params] :as env}]
-       (gen/let [q (gen-param-expr-key env)
-                 p (gen-params env)]
+       (genh/let [q (gen-param-expr-key env)
+                  p (gen-params env)]
          (list q p)))
 
      ::gen-query-expr
@@ -105,12 +104,12 @@
          (gen/vector-distinct (gen-property env))))
 
      ::gen-mutation-key
-     (fn gen-mutation-key [_] gen/symbol)
+     (fn gen-mutation-key [_] (gen/symbol))
 
      ::gen-mutation-expr
      (fn gen-mutation-expr [{::keys [gen-mutation-key gen-params] :as env}]
-       (gen/let [key (gen-mutation-key env)
-                 val (gen-params env)]
+       (genh/let [key (gen-mutation-key env)
+                  val (gen-params env)]
          (list key val)))
 
      ::gen-mutation-join
