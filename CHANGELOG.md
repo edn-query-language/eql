@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.0.1]
+- Add `eql-ast` helper
+
 ## [1.0.0]
 - Generative features moved to `edn-query-language.core` to avoid requiring test.check for basic operations
 
