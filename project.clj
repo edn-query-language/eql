@@ -3,8 +3,15 @@
   :url "https://github.com/edn-query-language/eql"
   :license {:name "MIT" :url "https://opensource.org/licenses/MIT"}
 
-  :plugins [[lein-tools-deps "0.4.1"]]
-  :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
-  :lein-tools-deps/config {:config-files [:install :user :project]}
+  :source-paths ["src"]
 
-  :jar-exclusions [#"public/.*" #"\.DS_Store"])
+  :dependencies [[org.clojure/clojure "1.10.0" :scope "provided"]
+                 [org.clojure/clojurescript "1.10.764" :scope "provided"]
+                 [org.clojure/test.check "1.1.0"]]
+
+  :jar-exclusions [#"resources/.*" #"node-modules/.+" #"public/.*" #"\.DS_Store"]
+
+  :deploy-repositories [["clojars" {:url   "https://clojars.org/repo/"
+                                    :creds :gpg :checksum :ignore}]
+                        ["releases" :clojars]
+                        ["snapshots" :clojars]])
