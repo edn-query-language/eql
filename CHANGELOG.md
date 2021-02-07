@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.1]
+## [1.0.2]
 - In the specs for AST, :query is now optional
 
 ## [1.0.0]
