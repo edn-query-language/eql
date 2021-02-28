@@ -1,6 +1,6 @@
 # Changelog
 
-## [Next]
+## [2021.02.28]
 - Add `update-child` helper
 - Add `update-recursive-depth` helper
 
