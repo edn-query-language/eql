@@ -1,5 +1,9 @@
 # Changelog
 
+## [Next]
+- Add `update-child` helper
+- Add `update-recursive-depth` helper
+
 ## [1.0.2]
 - In the specs for AST, :query is now optional
 

@@ -273,6 +273,25 @@
              ['(hello {:login "u1"})])
            nil))))
 
+(deftest test-update-child
+  (is (= (eql/update-child {:children [{:dispatch-key :id :key :id :type :prop}
+                                       {:dispatch-key :parent :key :parent :query 3 :type :join}]
+                            :type     :root}
+           :parent update :query dec)
+         {:children [{:dispatch-key :id :key :id :type :prop}
+                     {:dispatch-key :parent :key :parent :query 2 :type :join}]
+          :type     :root})))
+
+(deftest update-recursive-depth-test
+  (is (= (eql/update-recursive-depth
+           {:children [{:dispatch-key :id :key :id :type :prop}
+                       {:dispatch-key :parent :key :parent :query 3 :type :join}]
+            :type     :root}
+           :parent dec)
+         {:children [{:dispatch-key :id :key :id :type :prop}
+                     {:dispatch-key :parent :key :parent :query 2 :type :join}]
+          :type     :root})))
+
 (deftest test-mask-query
   (is (= (eql/mask-query [] [])
          []))

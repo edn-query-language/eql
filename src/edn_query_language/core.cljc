@@ -411,6 +411,27 @@
     (assoc source-ast :children [])
     (:children mask-ast)))
 
+(defn update-child
+  "Given an AST, find the child with a given key and run update against it."
+  [ast key & args]
+  (if-let [idx (some->> (:children ast)
+                        (map-indexed vector)
+                        (filter (comp #{key} :key second))
+                        ffirst)]
+    (apply update-in ast [:children idx] args)
+    ast))
+
+(defn update-recursive-depth
+  "Given an AST, find the child with a given key and run update against it."
+  [ast key & args]
+  (if-let [idx (some->> (:children ast)
+                        (map-indexed vector)
+                        (filter (comp #(and (= key (:key %))
+                                            (pos-int? (:query %))) second))
+                        ffirst)]
+    (apply update-in ast [:children idx :query] args)
+    ast))
+
 (defn mask-query
   "Given a source EQL query, use a mask EQL query to filter which elements to pick from
   the source. Params will be maintaned from the source, params in mask are ignored."
