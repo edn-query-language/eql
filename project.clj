@@ -1,4 +1,4 @@
-(defproject edn-query-language/eql "2021.02.28"
+(defproject edn-query-language/eql "2021.07.18"
   :description "EDN Query Language support library"
   :url "https://github.com/edn-query-language/eql"
   :license {:name "MIT" :url "https://opensource.org/licenses/MIT"}
