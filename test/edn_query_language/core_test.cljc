@@ -351,3 +351,35 @@
                          {:type :join, :dispatch-key :table, :key [:table 1], :query [:z {:other [:m :n]}]}
                          {:type :join, :dispatch-key :ujoin, :key :ujoin, :query {:u1 [:x], :u2 [:y]}}]}
             ast)))))
+
+
+(deftest merge-asts-as-reduce-function
+  (testing
+    "init - when called with arity zero, it returns an empty ast"
+    (is (= {:type     :root
+            :children []}
+          (transduce (map identity)
+            eql/merge-asts
+            []))))
+  (testing
+    "completion - when called with arity one, it should return its argument"
+    (is (= {:children [{:dispatch-key :a
+                        :key          :a
+                        :type         :prop}]
+            :type     :root}
+          (transduce (map identity)
+            eql/merge-asts
+            [(eql/query->ast [:a])]))))
+  (testing
+    "step - the old arity 2. Should compose both nodes into a new node"
+    (is (= {:children [{:dispatch-key :a
+                        :key          :a
+                        :type         :prop}
+                       {:dispatch-key :b
+                        :key          :b
+                        :type         :prop}]
+            :type     :root}
+          (transduce (map identity)
+            eql/merge-asts
+            [(eql/query->ast [:a])
+             (eql/query->ast [:b])])))))

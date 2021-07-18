@@ -368,7 +368,10 @@
 
 (defn merge-asts
   "Merges two ast's."
-  [qa qb]
+ ([] {:type :root
+      :children []})
+ ([q] q)
+ ([qa qb]
   (reduce (fn [ast {:keys [key type params] :as item-b}]
             (if-let [[idx item] (->> ast :children
                                      (keep-indexed #(if (-> %2 :key (= key)) [%1 %2]))
@@ -390,7 +393,7 @@
                 :else ast)
               (update ast :children conj item-b)))
     qa
-    (:children qb)))
+    (:children qb))))
 
 (defn merge-queries
   "Merges two queries"
@@ -505,7 +508,10 @@
     :ret ::param-expr)
 
   (s/fdef merge-asts
-    :args (s/cat :qa :edn-query-language.ast/node, :qb :edn-query-language.ast/node)
+    :args (s/or
+            :init (s/cat)
+            :completion (s/cat :q :edn-query-language.ast/node)
+            :step (s/cat :qa :edn-query-language.ast/node, :qb :edn-query-language.ast/node))
     :ret (s/nilable :edn-query-language.ast/node))
 
   (s/fdef merge-queries
