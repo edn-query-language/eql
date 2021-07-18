@@ -1,5 +1,8 @@
 # Changelog
 
+## [2021.07.18]
+- `merge-ast` support arities 0 and 1 to work as a reducing function
+
 ## [2021.02.28]
 - Add `update-child` helper
 - Add `update-recursive-depth` helper
