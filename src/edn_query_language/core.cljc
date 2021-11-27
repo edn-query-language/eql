@@ -3,7 +3,7 @@
   (:require [clojure.spec.alpha :as s]))
 
 (def ^:dynamic *shallow-conversion*
-  "Dynamic var.  When bound to true in the current thread calls to query->ast will no go past the
+  "Dynamic var.  When bound to true in the current thread, calls to query->ast will not go past the
   first level of children.  This is useful when you just want the AST for one layer of a query."
   false)
 
