@@ -13,14 +13,14 @@
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>What is EQL? | EDN Query Language</title>
+    <title>Untitled | EDN Query Language</title>
     <link rel="canonical" href="http://edn-query-language.org/eql/1.0.0/what-is-eql.html">
     <link rel="stylesheet" href="../../assets/css/site.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
     <link rel="schema.dcterms" href="https://purl.org/dc/terms/">
     <meta name="dcterms.subject" content="eql">
     <meta name="dcterms.identifier" content="1.0.0">
-    <meta name="generator" content="Antora 2.0.0">
+    <meta name="generator" content="Antora 2.1.2">
   </head>
   <body class="article">
 <header class="header">
@@ -84,13 +84,18 @@
 </nav>
 <div class="tools" role="navigation">
   <ul>
-    <li class="tool edit"><a href="https://github.com/edn-query-language/eql/edit/master/docs-src/modules/ROOT/pages/what-is-eql.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
+    <li class="tool edit"><a href="https://github.com/edn-query-language/eql/edit/main/docs-src/modules/ROOT/pages/what-is-eql.adoc" title="Edit Page" target="_blank" rel="noopener">Edit</a></li>
   </ul>
 </div>
   </div>
 <article class="doc">
-<h1 class="page">What is EQL?</h1>
-<div id="preamble">
+<div class="imageblock">
+<div class="content">
+<img src="_images/eql_logo_github.png" alt="eql logo github">
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_is_eql"><a class="anchor" href="#_what_is_eql"></a>What is EQL?</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>EQL is a declarative way to make hierarchical (and possibly nested) selections of information about data requirements.</p>
@@ -162,7 +167,7 @@ what it looks like for nested structures:</p>
 </td>
 <td class="content">
 Although with just EQL you can&#8217;t know if a key value is expected to be a single item or a sequence, you
-can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
+can have this information setup out of band using Clojure specs. If you do so, you can instrospect the spec
 and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
 if the response of a key is a single item or a sequence.
 </td>
@@ -243,7 +248,7 @@ there is a good set of intersection in features between both, as:</p>
 <div class="paragraph">
 <p>GraphQL has a type system in its definition, and it is required for a GraphQL system to work. EQL has
 no such thing, and it dictates only the syntax but not the semantics. Some features in
-GraphQL just doesn&#8217;t make sense in EQL, like fragments, since EQL is already a data format (EDN),
+GraphQL don&#8217;t make sense in EQL, like fragments, since EQL is already a data format (EDN),
 it&#8217;s easy to compose data as you would do in a regular Clojure program, for that reason
 many features are not necessary because EQL is a parseable data format with all the Clojure
 tools already available to operate on top of it. Also read the <a href="library.html#_ast_encodedecode" class="page">AST Encode/Decode</a>
