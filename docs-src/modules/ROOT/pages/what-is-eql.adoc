@@ -1,3 +1,5 @@
+image::eql_logo_github.png[]
+
 = What is EQL?
 
 EQL is a declarative way to make hierarchical (and possibly nested) selections of information about data requirements.
