@@ -13,7 +13,7 @@ ifdef::env-github,env-cljdoc[]
 :warning-caption: :warning:
 endif::[]
 
-= EQL
+image:./assets/eql_logo_github.png[]
 
 image:https://img.shields.io/clojars/v/edn-query-language/eql.svg[link=https://clojars.org/edn-query-language/eql]
 image:https://cljdoc.xyz/badge/edn-query-language/eql[link=https://cljdoc.xyz/d/edn-query-language/eql/CURRENT]
