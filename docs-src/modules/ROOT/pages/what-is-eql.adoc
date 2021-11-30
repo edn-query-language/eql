@@ -1,4 +1,4 @@
-image::eql_logo_github.png[]
+image:https://raw.githubusercontent.com/edn-query-language/eql/main/assets/eql_logo_github.png[]
 
 == What is EQL?
 
