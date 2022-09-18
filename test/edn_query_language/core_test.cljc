@@ -148,6 +148,47 @@
                          :query        [:sub-query],
                          :children     [{:type :prop, :dispatch-key :sub-query, :key :sub-query}]}]}))))
 
+(deftest test-query->ast-meta
+  (is (= (eql/query->ast ^:root-meta [])
+         {:type :root, :children [], :meta {:root-meta true}}))
+
+  (is (= (eql/query->ast [^:join-meta {:join [:with-meta]}])
+         {:type :root,
+          :children [{:type :join,
+                      :dispatch-key :join,
+                      :key :join,
+                      :query [:with-meta],
+                      :meta {:join-meta true},
+                      :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]}))
+
+  (is (= (eql/query->ast [^:component {:join [:with-meta]}])
+         {:type :root,
+          :children [{:type :join,
+                      :dispatch-key :join,
+                      :key :join,
+                      :query [:with-meta],
+                      :meta {:component true},
+                      :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]}))
+
+  (is (= (eql/query->ast [{:join ^:component [:with-meta]}])
+         {:type :root,
+          :children [{:type :join,
+                      :dispatch-key :join,
+                      :key :join,
+                      :query [:with-meta],
+                      :meta {:component true},
+                      :component true,
+                      :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]}))
+
+  (is (= (eql/query->ast [{:join ^:join-vector-meta [:with-meta]}])
+         {:type :root,
+          :children [{:type :join,
+                      :dispatch-key :join,
+                      :key :join,
+                      :query [:with-meta],
+                      :meta {:join-vector-meta true},
+                      :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]})))
+
 (defn query<->ast-props []
   (props/for-all [query (eql-gen/make-gen {::eql-gen/gen-params
                                        (fn [_]

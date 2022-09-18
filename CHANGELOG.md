@@ -1,5 +1,8 @@
 # Changelog
 
+## [2022.09.18]
+- When converting query to AST, extracts meta from join map and vector
+
 ## [2021.07.18]
 - `merge-ast` support arities 0 and 1 to work as a reducing function
 

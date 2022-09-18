@@ -121,8 +121,12 @@
 (declare expr->ast)
 
 (defn- mark-meta [source target]
-  (cond-> target
-    (meta source) (assoc :meta (meta source))))
+  (let [m (merge (meta source)
+            (if (map? source)
+              (let [[_ v] (first source)]
+                (meta v))))]
+    (cond-> target
+      m (assoc :meta m))))
 
 (defn symbol->ast [k]
   {:dispatch-key k
