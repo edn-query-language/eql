@@ -257,7 +257,7 @@
        (eql/transduce-children xform)
        eql/ast->query))
 
-(deftest test-tranduce-children
+(deftest test-transduce-children
   (is (= (transduce-query
            (comp (filter (comp #{:a :c} :key))
                  (map #(assoc % :params {:n 42})))
