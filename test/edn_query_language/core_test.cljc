@@ -187,6 +187,15 @@
                       :key :join,
                       :query [:with-meta],
                       :meta {:join-vector-meta true},
+                      :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]}))
+
+  (is (= (eql/query->ast [^{:v1 "c"} {:join ^{:v0 "a" :v1 "b"} [:with-meta]}])
+         {:type :root,
+          :children [{:type :join,
+                      :dispatch-key :join,
+                      :key :join,
+                      :query [:with-meta],
+                      :meta {:v0 "a" :v1 "c"},
                       :children [{:type :prop, :dispatch-key :with-meta, :key :with-meta}]}]})))
 
 (defn query<->ast-props []

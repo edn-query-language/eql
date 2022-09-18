@@ -24,16 +24,16 @@
 
   (s/def ::join-query
     (s/or :query ::query
-          :union ::union
-          :recursion ::recursion))
+      :union ::union
+      :recursion ::recursion))
 
   (s/def ::params
     map?)
 
   (s/def ::param-expr-key
     (s/or :prop ::property
-          :join ::join
-          :ident ::ident))
+      :join ::join
+      :ident ::ident))
 
   (s/def ::param-expr
     (s/and seq? (s/cat :expr ::param-expr-key :params (s/? ::params))))
@@ -53,15 +53,15 @@
 
   (s/def ::mutation
     (s/or :mutation ::mutation-expr
-          :mutation-join ::mutation-join))
+      :mutation-join ::mutation-join))
 
   (s/def ::query-expr
     (s/or :prop ::property
-          :join ::join
-          :ident ::ident
-          :mutation ::mutation
-          :param-exp ::param-expr
-          :special ::special-property))
+      :join ::join
+      :ident ::ident
+      :mutation ::mutation
+      :param-exp ::param-expr
+      :special ::special-property))
 
   (s/def ::query
     (s/coll-of ::query-expr :kind vector?))
@@ -121,10 +121,11 @@
 (declare expr->ast)
 
 (defn- mark-meta [source target]
-  (let [m (merge (meta source)
+  (let [m (merge
             (if (map? source)
               (let [[_ v] (first source)]
-                (meta v))))]
+                (meta v)))
+            (meta source))]
     (cond-> target
       m (assoc :meta m))))
 
@@ -182,18 +183,18 @@
         type        (if (= :call (:type ast)) :call :join)
         component   (-> v meta :component)]
     (merge ast
-           (mark-meta join {:type type :query v})
-           (when-not (nil? component)
-             {:component component})
-           (when query-root?
-             {:query-root true})
+      (mark-meta join {:type type :query v})
+      (when-not (nil? component)
+        {:component component})
+      (when query-root?
+        {:query-root true})
       (when-not (or (number? v) (= '... v) *shallow-conversion*)
-             (cond
-               (vector? v) {:children (into [] (map expr->ast) v)}
-               (map? v) {:children [(union->ast v)]}
-               :else (throw
-                       (ex-info (str "Invalid join, " join)
-                         {:type :error/invalid-join})))))))
+        (cond
+          (vector? v) {:children (into [] (map expr->ast) v)}
+          (map? v) {:children [(union->ast v)]}
+          :else (throw
+                  (ex-info (str "Invalid join, " join)
+                    {:type :error/invalid-join})))))))
 
 (defn ident->ast [[k id :as ref]]
   {:type         :prop
@@ -240,22 +241,22 @@
              (parameterize expr params))
            (let [key (if (= :call type) (parameterize key params) key)]
              (if (or (= :join type)
-                     (and (= :call type) (:children ast)))
+                   (and (= :call type) (:children ast)))
                (if (and (not= '... query) (not (number? query))
-                        (or (true? unparse?)
-                            (= :call type)))
+                     (or (true? unparse?)
+                       (= :call type)))
                  (let [{:keys [children]} ast
                        query-meta (meta query)]
                    (if (and (== 1 (count children))
-                            (= :union (:type (first children)))) ;; UNION
+                         (= :union (:type (first children)))) ;; UNION
                      (with-meta
                        {key (into (cond-> (with-meta {} ast-meta)
                                     component (vary-meta assoc :component component))
-                                  (map (fn [{:keys [union-key children component]}]
-                                         [union-key
-                                          (cond-> (into [] (map #(ast->expr % unparse?)) children)
-                                            (not (nil? component)) (vary-meta assoc :component component))]))
-                                  (:children (first children)))}
+                              (map (fn [{:keys [union-key children component]}]
+                                     [union-key
+                                      (cond-> (into [] (map #(ast->expr % unparse?)) children)
+                                        (not (nil? component)) (vary-meta assoc :component component))]))
+                              (:children (first children)))}
                        ast-meta)
                      (with-meta
                        {key (cond-> (into (with-meta [] query-meta) (map #(ast->expr % unparse?)) children)
@@ -275,8 +276,8 @@
   "Check if x is a EQL ident."
   [x]
   (and (vector? x)
-       (keyword? (first x))
-       (= 2 (count x))))
+    (keyword? (first x))
+    (= 2 (count x))))
 
 ;; query processing helpers
 
@@ -372,32 +373,32 @@
 
 (defn merge-asts
   "Merges two ast's."
- ([] {:type :root
-      :children []})
- ([q] q)
- ([qa qb]
-  (reduce (fn [ast {:keys [key type params] :as item-b}]
-            (if-let [[idx item] (->> ast :children
-                                     (keep-indexed #(if (-> %2 :key (= key)) [%1 %2]))
-                                     first)]
-              (cond
-                (or (= :join (:type item) type)
-                    (= :prop (:type item) type))
-                (if (= (:params item) params)
-                  (update-in ast [:children idx] merge-asts item-b)
-                  (reduced nil))
+  ([] {:type     :root
+       :children []})
+  ([q] q)
+  ([qa qb]
+   (reduce (fn [ast {:keys [key type params] :as item-b}]
+             (if-let [[idx item] (->> ast :children
+                                      (keep-indexed #(if (-> %2 :key (= key)) [%1 %2]))
+                                      first)]
+               (cond
+                 (or (= :join (:type item) type)
+                   (= :prop (:type item) type))
+                 (if (= (:params item) params)
+                   (update-in ast [:children idx] merge-asts item-b)
+                   (reduced nil))
 
-                (and (= :prop (:type item))
-                     (= :join type))
-                (assoc-in ast [:children idx] item-b)
+                 (and (= :prop (:type item))
+                   (= :join type))
+                 (assoc-in ast [:children idx] item-b)
 
-                (= :call type)
-                (reduced nil)
+                 (= :call type)
+                 (reduced nil)
 
-                :else ast)
-              (update ast :children conj item-b)))
-    qa
-    (:children qb))))
+                 :else ast)
+               (update ast :children conj item-b)))
+     qa
+     (:children qb))))
 
 (defn merge-queries
   "Merges two queries"
@@ -422,9 +423,9 @@
   "Given an AST, find the child with a given key and run update against it."
   [ast key & args]
   (if-let [idx (some->> (:children ast)
-                        (map-indexed vector)
-                        (filter (comp #{key} :key second))
-                        ffirst)]
+                 (map-indexed vector)
+                 (filter (comp #{key} :key second))
+                 ffirst)]
     (apply update-in ast [:children idx] args)
     ast))
 
@@ -432,10 +433,10 @@
   "Given an AST, find the child with a given key and run update against it."
   [ast key & args]
   (if-let [idx (some->> (:children ast)
-                        (map-indexed vector)
-                        (filter (comp #(and (= key (:key %))
-                                            (pos-int? (:query %))) second))
-                        ffirst)]
+                 (map-indexed vector)
+                 (filter (comp #(and (= key (:key %))
+                                  (pos-int? (:query %))) second))
+                 ffirst)]
     (apply update-in ast [:children idx :query] args)
     ast))
 
@@ -506,9 +507,9 @@
 
   (s/fdef update-property-param
     :args (s/cat :x (s/or :property ::property
-                          :expr ::param-expr)
-                 :f fn?
-                 :args (s/* any?))
+                      :expr ::param-expr)
+            :f fn?
+            :args (s/* any?))
     :ret ::param-expr)
 
   (s/fdef merge-asts
