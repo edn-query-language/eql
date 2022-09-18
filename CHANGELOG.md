@@ -1,6 +1,6 @@
 # Changelog
 
-## [2022.09.18]
+## [NEXT]
 - When converting query to AST, extracts meta from join map and vector
 
 ## [2021.07.18]
