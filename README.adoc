@@ -578,7 +578,7 @@ You can use spec explain feature for more details:
 ; In: [0] val: #{:set} fails spec: :edn-query-language.core/special-property at: [:special] predicate: #{(quote *)}
 ----
 
-I suggest you check the link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L133-L196[sources for the specs] for more details on parts that compose
+I suggest you check the link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/specs.cljc[sources for the specs] for more details on parts that compose
 it, they will stay consistent and can be used to validate parts of the transaction as well.
 
 ==== Generation
@@ -620,7 +620,7 @@ NOTE: `gen` is alias for `clojure.test.check.generators`
 Although fully random queries can be interesting to test some parser edge cases, in many
 situations you will may want to constraint how the query is generated, with this in mind
 EQL provides a way to enable this kind of customization. To get a sense of what you can
-customize link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/core.cljc#L10-L121[you can take a look at the default implementation for each default generator],
+customize link:https://github.com/edn-query-language/eql/blob/master/src/edn_query_language/gen.cljc[you can take a look at the default implementation for each default generator],
 any of those keys can be tuned to constraint how the query is generated.
 
 To demonstrate how to use this, let's customize the generator to limit the properties it generates
