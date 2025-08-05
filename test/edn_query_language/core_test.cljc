@@ -248,6 +248,12 @@
   (is (= (eql/merge-queries [{:a [:x]}] [:a])
          [{:a [:x]}]))
 
+  (is (= (eql/merge-queries [:a] [:b] [:c :d])
+         [:a :b :c :d]))
+
+  (is (= (eql/merge-queries [{:user [:name]}] [{:user [:email]}] [{:user [:photo]}])
+         [{:user [:name :email :photo]}]))
+
   (testing "don't merge queries with different params"
     (is (= (eql/merge-queries ['({:user [:name]} {:login "u1"})]
              ['({:user [:email]} {:login "u2"})])
