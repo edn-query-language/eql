@@ -398,7 +398,7 @@
    (reduce (fn [ast q] (merge-asts ast q)) (merge-asts qa qb) more)))
 
 (defn merge-queries
-  "Merges two queries"
+  "Merges two or more queries"
   ([qa] qa)
   ([qa qb]
    (some-> (merge-asts (query->ast qa) (query->ast qb))
