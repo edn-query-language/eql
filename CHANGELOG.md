@@ -1,5 +1,8 @@
 # Changelog
 
+## Not yet released
+- Add variadic versions of `merge-ast` and `merge-queries`
+
 ## [2021.07.18]
 - `merge-ast` support arities 0 and 1 to work as a reducing function
 

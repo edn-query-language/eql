@@ -393,13 +393,20 @@
                 :else ast)
               (update ast :children conj item-b)))
     qa
-    (:children qb))))
+    (:children qb)))
+  ([qa qb & more]
+   (reduce (fn [ast q] (merge-asts ast q)) (merge-asts qa qb) more)))
 
 (defn merge-queries
-  "Merges two queries"
-  [qa qb]
-  (some-> (merge-asts (query->ast qa) (query->ast qb))
-    (ast->query)))
+  "Merges two or more queries"
+  ([qa] qa)
+  ([qa qb]
+   (some-> (merge-asts (query->ast qa) (query->ast qb))
+           (ast->query)))
+  ([qa qb & more]
+   (some-> (reduce (fn [ast q] (merge-asts ast (query->ast q)))
+                   (merge-asts (query->ast qa) (query->ast qb)) more)
+           (ast->query))))
 
 (defn mask-query* [{:keys [children] :as source-ast} mask-ast]
   (reduce
@@ -515,5 +522,5 @@
     :ret (s/nilable :edn-query-language.ast/node))
 
   (s/fdef merge-queries
-    :args (s/cat :qa (s/nilable ::query), :qb (s/nilable ::query))
+    :args (s/cat :qa (s/nilable ::query), :qb (s/nilable ::query), :more (s/* (s/nilable ::query)))
     :ret (s/nilable ::query)))
