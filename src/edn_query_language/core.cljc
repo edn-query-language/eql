@@ -518,7 +518,9 @@
     :args (s/or
             :init (s/cat)
             :completion (s/cat :q :edn-query-language.ast/node)
-            :step (s/cat :qa :edn-query-language.ast/node, :qb :edn-query-language.ast/node))
+            :step (s/cat :qa :edn-query-language.ast/node
+                         :qb :edn-query-language.ast/node
+                         :more (s/* :edn-query-language.ast/node)))
     :ret (s/nilable :edn-query-language.ast/node))
 
   (s/fdef merge-queries
