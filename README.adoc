@@ -78,9 +78,9 @@ It works the same to represent nested sequences:
 ----
 
 TIP: Although with just EQL you can't know if a key value is expected to be a single item or a sequence, you
-can have this information setup out of band using Clojure specs, if you do so you can instrospect the spec
-and detect that, this is not a feature of EQL in any way, just a suggested approach in case you need to know
-if the response of a key is a single item or a sequence.
+will know this as EQL is a model of your domain. If required, you can have this information setup out of band
+using Clojure specs, if you do so you can introspect the spec and detect that, this is not a feature of EQL in
+any way, just a suggested approach in case you need to know if the response of a key is a single item or a sequence.
 
 ==== EQL for operations
 
@@ -275,7 +275,7 @@ It's common to use an ident as a join key to start a query for some entity:
 
 === Parameters
 
-EQL properties, joins, and idents have support for parametrization. This allows the
+EQL properties, joins, and idents have support for parameters. This allows the
 query to provide an extra dimension of information about the requested data. A parameter
 is expressed by wrapping the thing with an EDN list, like so:
 
@@ -298,7 +298,7 @@ is expressed by wrapping the thing with an EDN list, like so:
 ----
 
 Note on the AST side it gets a new `:params` key. Params *must* always be maps, the
-map values can be anything. Here are more examples of parameterizing queries:
+map values can be anything. Here are more examples of adding parameters to queries:
 
 [source,clojure]
 ----
@@ -707,10 +707,10 @@ One more example changing many definitions:
 If you wanna see an even more advanced usage, you can check link:https://github.com/wilkerlucio/pathom/blob/master/src/com/wsscode/pathom/connect/gen.cljc[Pathom connect generator], which
 uses the Pathom connect index to generate queries that are valid according to the user property graph.
 
-==== Removing specs on Clojurescript
+==== Removing specs on ClojureScript
 
 If you are not using the specs provided by EQL you can free some build space by
-eliding then. To do that you need to set the Clojurescript compiler options with:
+eliding then. To do that you need to set the ClojureScript compiler options with:
 
 [source,clojure]
 ----
