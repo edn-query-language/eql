@@ -388,7 +388,14 @@
                         :key          :b
                         :type         :prop}]
             :type     :root}
-          (transduce (map identity)
-            eql/merge-asts
-            [(eql/query->ast [:a])
-             (eql/query->ast [:b])])))))
+           (transduce (map identity)
+                      eql/merge-asts
+                      [(eql/query->ast [:a])
+                       (eql/query->ast [:b])]))))
+  (testing
+    "variadic"
+    (is (= (eql/ast->query
+             (eql/merge-asts (eql/query->ast [:a])
+                             (eql/query->ast [:b])
+                             (eql/query->ast [:c])))
+           [:a :b :c]))))
