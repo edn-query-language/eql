@@ -17,7 +17,7 @@ image:./assets/eql_logo_github.png[]
 
 image:https://img.shields.io/clojars/v/edn-query-language/eql.svg[link=https://clojars.org/edn-query-language/eql]
 image:https://cljdoc.xyz/badge/edn-query-language/eql[link=https://cljdoc.xyz/d/edn-query-language/eql/CURRENT]
-image:https://circleci.com/gh/edn-query-language/eql/tree/master.svg?style=svg["CircleCI", link="https://circleci.com/gh/edn-query-language/eql/tree/master"]
+image:https://github.com/edn-query-language/eql/actions/workflows/test.yml/badge.svg["GitHub actions", link="https://github.com/edn-query-language/eql/actions/workflows/test.yml"]
 
 This repository contains a specification for EQL and a support library to help the development
 of tools using it.
